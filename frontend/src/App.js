@@ -457,9 +457,9 @@ const ComplaintCard = ({ complaint, onSelect, isVertical = false }) => {
                             {complaint.status}
                         </span>
                     </div>
-                    <h4 className={`font-bold text-gray-800 ${isVertical ? 'text-base' : 'text-lg'} ${isVertical ? '' : 'truncate'}`}>
-                        {complaint.title}
-                    </h4>
+                    <h4 className={`font-bold text-gray-800 ${isVertical ? 'text-base' : 'text-lg'} break-words leading-tight`}>
+    {complaint.title}
+</h4>
                     <div className="flex items-center space-x-2 mt-1">
                         <div className="w-1 h-1 bg-gray-400 rounded-full"></div>
                         <p className="text-sm text-gray-500">{complaint.category}</p>
@@ -2430,7 +2430,9 @@ const ComplaintDetailsPage = ({ complaint, onBack }) => {
                     <div className="bg-white rounded-2xl shadow-sm p-6 border border-gray-100">
                         <h3 className="text-lg font-bold text-gray-800 mb-4">Description</h3>
                         <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                            <p className="text-gray-700 text-sm leading-relaxed">{complaint.description}</p>
+                            <p className="text-gray-600 text-sm leading-relaxed break-words whitespace-normal">
+    {complaint.description}
+</p>
                         </div>
                     </div>
                 </div>

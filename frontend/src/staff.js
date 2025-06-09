@@ -746,9 +746,11 @@ const StaffLoginPage = ({ onBack, complaints, navigate }) => {
                                                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                                                         {complaint.id}
                                                     </td>
-                                                    <td className="px-6 py-4 text-sm text-gray-900 max-w-xs truncate">
-                                                        {complaint.subject}
-                                                    </td>
+                                                    <td className="px-6 py-4 text-sm text-gray-900 max-w-xs">
+    <div className="break-words whitespace-normal leading-tight">
+        {complaint.subject}
+    </div>
+</td>
                                                     <td className="px-6 py-4 whitespace-nowrap">
                                                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getPriorityColor(complaint.priority)}`}>
                                                             {complaint.priority}

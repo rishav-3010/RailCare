@@ -15,6 +15,7 @@ import {
     DEFAULT_ASSIGNMENTS 
 } from './constants';
 import GuidelinesPage from './GuidelinesPage';
+import StaffLoginPage from './staff';
 
 
 // At the top of App.js, add this import
@@ -2086,6 +2087,12 @@ const generateComplaintStatus = (category, priority, timeElapsed) => {
             />;
         case '/faq':
             return <FaqPage />;
+        case '/staff-login':
+            return <StaffLoginPage 
+                onBack={() => navigate('/')} 
+                complaints={complaints}
+                navigate={navigate}
+            />;
         default:
             return (
                 <div className="text-center py-20">

@@ -213,10 +213,23 @@ const StaffLoginPage = ({ onBack, complaints, navigate }) => {
     };
 
     const handleDepartmentChange = (department) => {
-        setSelectedDepartment(department);
-        setSelectedSubDepartment('');
+    setSelectedDepartment(department);
+    setSelectedSubDepartment('');
+    
+    if (department) {
+        // When department is selected, show all complaints from its subdepartments
+        const subdepartments = departmentStructure[department] || [];
+        const filtered = Object.values(staffComplaints).filter(complaint => 
+            subdepartments.includes(complaint.assignedDepartment)
+        );
+        setFilteredComplaints(filtered);
+        console.log('Department selected:', department, 'Showing complaints from subdepartments:', subdepartments, 'Found:', filtered.length);
+    } else {
         setFilteredComplaints([]);
-    };
+    }
+};
+
+
 
     const handleSubDepartmentChange = (subDepartment) => {
         setSelectedSubDepartment(subDepartment);
@@ -224,20 +237,29 @@ const StaffLoginPage = ({ onBack, complaints, navigate }) => {
     };
 
     const filterComplaintsByDepartment = (subDepartment) => {
-    if (!subDepartment) return;
+    console.log('Filtering - Department:', selectedDepartment, 'SubDepartment:', subDepartment);
     
-    console.log('Filtering for sub-department:', subDepartment); // Debug log
-    console.log('Available complaints:', Object.values(staffComplaints)); // Debug log
+    let filtered = [];
     
-    // Filter from staff complaints instead of props complaints
-    const filtered = Object.values(staffComplaints).filter(complaint => {
-        console.log('Checking complaint:', complaint.id, 'assigned to:', complaint.assignedDepartment); // Debug log
-        return complaint.assignedDepartment === subDepartment;
-    });
+    if (subDepartment) {
+        // If subdepartment is selected, filter by specific subdepartment
+        filtered = Object.values(staffComplaints).filter(complaint => 
+            complaint.assignedDepartment === subDepartment
+        );
+        console.log('Filtering by subdepartment:', subDepartment, 'Found:', filtered.length);
+    } else if (selectedDepartment) {
+        // If only department is selected, show all complaints from all its subdepartments
+        const subdepartments = departmentStructure[selectedDepartment] || [];
+        filtered = Object.values(staffComplaints).filter(complaint => 
+            subdepartments.includes(complaint.assignedDepartment)
+        );
+        console.log('Filtering by department:', selectedDepartment, 'Subdepartments:', subdepartments, 'Found:', filtered.length);
+    }
     
-    console.log('Filtered complaints:', filtered); // Debug log
+    console.log('Final filtered complaints:', filtered);
     setFilteredComplaints(filtered);
 };
+
 
 
     const handleEditComplaint = (complaint) => {
@@ -541,54 +563,64 @@ const StaffLoginPage = ({ onBack, complaints, navigate }) => {
             </div>
 
             {/* Filters and Search */}
-            {selectedSubDepartment && (
-                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
-                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                        <div className="flex items-center space-x-4">
-                            <h3 className="text-lg font-bold text-gray-900">
-                                {selectedSubDepartment} Complaints
-                            </h3>
-                            <span className="px-3 py-1 bg-orange-100 text-orange-800 rounded-full text-sm font-medium">
-                                {filteredAndSearchedComplaints.length} complaints
-                            </span>
-                        </div>
+            {/* Updated Filters and Search */}
+{selectedDepartment && (
+    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div className="flex items-center space-x-4">
+                <h3 className="text-lg font-bold text-gray-900">
+                    {selectedSubDepartment 
+                        ? `${selectedSubDepartment} Complaints` 
+                        : `${selectedDepartment} Department - All Complaints`
+                    }
+                </h3>
+                <span className="px-3 py-1 bg-orange-100 text-orange-800 rounded-full text-sm font-medium">
+                    {filteredAndSearchedComplaints.length} complaints
+                </span>
+                {!selectedSubDepartment && (
+                    <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
+                        All Subdepartments
+                    </span>
+                )}
+            </div>
 
-                        <div className="flex flex-col sm:flex-row gap-4">
-                            <div className="relative">
-                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                                <input
-                                    type="text"
-                                    placeholder="Search complaints..."
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent w-64"
-                                />
-                            </div>
-
-                            <select
-                                value={statusFilter}
-                                onChange={(e) => setStatusFilter(e.target.value)}
-                                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                            >
-                                <option value="all">All Status</option>
-                                <option value="pending">Pending</option>
-                                <option value="in progress">In Progress</option>
-                                <option value="resolved">Resolved</option>
-                                <option value="closed">Closed</option>
-                                <option value="escalated">Escalated</option>
-                            </select>
-
-                            <button className="flex items-center space-x-2 px-4 py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors">
-                                <Download className="h-4 w-4" />
-                                <span>Export</span>
-                            </button>
-                        </div>
-                    </div>
+            <div className="flex flex-col sm:flex-row gap-4">
+                <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <input
+                        type="text"
+                        placeholder="Search complaints..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent w-64"
+                    />
                 </div>
-            )}
+
+                <select
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value)}
+                    className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                >
+                    <option value="all">All Status</option>
+                    <option value="pending">Pending</option>
+                    <option value="in progress">In Progress</option>
+                    <option value="resolved">Resolved</option>
+                    <option value="closed">Closed</option>
+                    <option value="escalated">Escalated</option>
+                </select>
+
+                <button className="flex items-center space-x-2 px-4 py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors">
+                    <Download className="h-4 w-4" />
+                    <span>Export</span>
+                </button>
+            </div>
+        </div>
+    </div>
+)}
+
 
             {/* Complaints Table */}
-            {selectedSubDepartment && (
+            {selectedDepartment  && (
                 <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
                     {filteredAndSearchedComplaints.length > 0 ? (
                         <div className="overflow-x-auto">

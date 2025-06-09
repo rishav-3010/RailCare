@@ -4,7 +4,7 @@ import {
     Send, Phone, MessageCircle, ArrowLeft, Home, Plus, Eye, 
     Train, ChevronDown, Activity, Star, Bell, Settings,
     Calendar, User, Filter, Download, Share2, ExternalLink,
-    Zap, Shield, Globe, TrendingUp, Award, Heart, Mail, 
+    Zap, Shield, Globe, TrendingUp, Award, Heart, Mail,  
      
      
 } from 'lucide-react';
@@ -549,13 +549,24 @@ const Header = ({ navigate, currentPath }) => {
                         </div>
 
                         {/* Staff Login Button */}
-                        <button
-                            onClick={() => navigate('/staff-login')}
-                            className="hidden md:flex items-center space-x-2 px-4 py-2 bg-orange-100 text-orange-700 hover:bg-orange-200 rounded-lg font-medium transition-all duration-300 border border-orange-200"
-                        >
-                            <Shield className="h-4 w-4" />
-                            <span className="text-sm">Staff Login</span>
-                        </button>
+                        {/* Updated Staff/User Login Button */}
+{/* Updated Staff/User Login Button */}
+<button
+    onClick={() => navigate(currentPath === '/staff-login' ? '/' : '/staff-login')}
+    className="hidden md:flex items-center space-x-2 px-4 py-2 bg-orange-100 text-orange-700 hover:bg-orange-200 rounded-lg font-medium transition-all duration-300 border border-orange-200"
+>
+    {currentPath === '/staff-login' ? (
+        <User className="h-4 w-4" />
+    ) : (
+        <Shield className="h-4 w-4" />
+    )}
+    <span className="text-sm">
+        {currentPath === '/staff-login' ? 'User Login' : 'Staff Login'}
+    </span>
+</button>
+
+
+
 
                         {/* Notifications */}
                         <div className="relative">
@@ -698,16 +709,28 @@ const Header = ({ navigate, currentPath }) => {
                             ))}
 
                             {/* Mobile Staff Login */}
-                            <button
-                                onClick={() => {
-                                    navigate('/staff-login');
-                                    setIsMobileMenuOpen(false);
-                                }}
-                                className="w-full flex items-center space-x-3 px-4 py-3 text-left text-orange-700 hover:bg-orange-50 transition-all duration-300"
-                            >
-                                <Shield className="h-5 w-5" />
-                                <span className="font-medium">Staff Login</span>
-                            </button>
+                            {/* Updated Mobile Staff/User Login */}
+<button
+    onClick={() => {
+        if (currentPath === '/staff-login') {
+            navigate('/');
+        } else {
+            navigate('/staff-login');
+        }
+        setIsMobileMenuOpen(false);
+    }}
+    className="w-full flex items-center space-x-3 px-4 py-3 text-left text-orange-700 hover:bg-orange-50 transition-all duration-300"
+>
+    {currentPath === '/staff-login' ? (
+        <User className="h-5 w-5" />
+    ) : (
+        <Shield className="h-5 w-5" />
+    )}
+    <span className="font-medium">
+        {currentPath === '/staff-login' ? 'User Login' : 'Staff Login'}
+    </span>
+</button>
+
 
                             {/* Emergency Contact in Mobile */}
                             <div className="mx-4 mt-4 p-3 bg-red-50 rounded-lg border border-red-200">
@@ -2111,7 +2134,7 @@ const generateComplaintStatus = (category, priority, timeElapsed) => {
 
     return (
         <div className="bg-gray-50 text-gray-800 min-h-screen">
-            <Header navigate={navigate} />
+            <Header navigate={navigate} currentPath={currentPath} />
             <main className="container mx-auto p-4 sm:p-6 lg:p-8">
                 {renderPage()}
             </main>

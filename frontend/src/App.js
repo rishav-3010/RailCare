@@ -464,48 +464,278 @@ const Modal = ({ type, title, message, onClose, isVisible }) => {
 
 // --- Enhanced Page Components ---
 
-const Header = ({ navigate }) => (
-    <header className="bg-white shadow-sm sticky top-0 z-50 border-b border-gray-100">
-        <nav className="container mx-auto px-4 sm:px-6 lg:px-8 py-4">
-            <div className="flex justify-between items-center">
-                <div className="flex items-center space-x-3 cursor-pointer group" onClick={() => navigate('/')}>
-                    <img 
-                        src="https://placehold.co/40x40/4f46e5/ffffff?text=IR" 
-                        alt="IRCTC Logo" 
-                        className="h-10 w-10 rounded-lg shadow-sm group-hover:shadow-md transition-all duration-300" 
-                    />
-                    <div>
-                        <h1 className="text-xl md:text-2xl font-bold text-gray-800">Grievance Portal</h1>
-                        <p className="text-xs text-gray-500 hidden sm:block">Indian Railways</p>
+const Header = ({ navigate, currentPath }) => {
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const [notifications, setNotifications] = useState([
+        { id: 1, message: "Your complaint CMP2025060701 has been updated", time: "2 min ago", unread: true },
+        { id: 2, message: "New FAQ section added", time: "1 hour ago", unread: false }
+    ]);
+    const [showNotifications, setShowNotifications] = useState(false);
+    const [showUserMenu, setShowUserMenu] = useState(false);
+
+    const unreadCount = notifications.filter(n => n.unread).length;
+
+    const navItems = [
+        { path: '/', label: 'Home', icon: Home },
+        { path: '/guidelines', label: 'Guidelines', icon: FileText },
+        { path: '/faq', label: 'FAQ', icon: MessageCircle }
+    ];
+
+    const isActivePath = (path) => {
+        if (path === '/' && (currentPath === '/' || currentPath === '/home')) return true;
+        return currentPath === path;
+    };
+
+    return (
+        <header className="bg-white shadow-lg sticky top-0 z-50 border-b border-gray-200">
+            <nav className="container mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="flex justify-between items-center h-16">
+                    {/* Logo and Brand */}
+                    <div 
+                        className="flex items-center space-x-3 cursor-pointer group" 
+                        onClick={() => navigate('/')}
+                    >
+                        <div className="relative">
+                            <img 
+                                src="https://placehold.co/40x40/4f46e5/ffffff?text=IR" 
+                                alt="IRCTC Logo" 
+                                className="h-10 w-10 rounded-lg shadow-md group-hover:shadow-lg transition-all duration-300 group-hover:scale-105" 
+                            />
+                            <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                        </div>
+                        <div className="hidden sm:block">
+                            <h1 className="text-xl font-bold text-gray-800 group-hover:text-indigo-600 transition-colors">
+                                Grievance Portal
+                            </h1>
+                            <p className="text-xs text-gray-500 font-medium">Indian Railways • 24/7 Support</p>
+                        </div>
+                    </div>
+
+                    {/* Desktop Navigation - Simplified */}
+                    <div className="hidden lg:flex items-center space-x-1">
+                        {navItems.map(({ path, label, icon: Icon }) => (
+                            <button
+                                key={path}
+                                onClick={() => navigate(path)}
+                                className={`flex items-center space-x-2 px-4 py-2 rounded-lg font-medium transition-all duration-300 ${
+                                    isActivePath(path)
+                                        ? 'bg-indigo-100 text-indigo-700 shadow-sm'
+                                        : 'text-gray-600 hover:text-indigo-600 hover:bg-gray-50'
+                                }`}
+                            >
+                                <Icon className="h-4 w-4" />
+                                <span className="text-sm">{label}</span>
+                            </button>
+                        ))}
+                    </div>
+
+                    {/* Right Side Actions */}
+                    <div className="flex items-center space-x-3">
+                        {/* Search Bar */}
+                        <div className="hidden md:flex items-center bg-gray-100 rounded-lg px-3 py-2 w-64">
+                            <Search className="h-4 w-4 text-gray-400 mr-2" />
+                            <input
+                                type="text"
+                                placeholder="Search complaints..."
+                                className="bg-transparent border-0 focus:ring-0 text-sm flex-1 text-gray-700 placeholder-gray-500"
+                            />
+                        </div>
+
+                        {/* Staff Login Button */}
+                        <button
+                            onClick={() => navigate('/staff-login')}
+                            className="hidden md:flex items-center space-x-2 px-4 py-2 bg-orange-100 text-orange-700 hover:bg-orange-200 rounded-lg font-medium transition-all duration-300 border border-orange-200"
+                        >
+                            <Shield className="h-4 w-4" />
+                            <span className="text-sm">Staff Login</span>
+                        </button>
+
+                        {/* Notifications */}
+                        <div className="relative">
+                            <button
+                                onClick={() => setShowNotifications(!showNotifications)}
+                                className="relative p-2 text-gray-600 hover:text-indigo-600 hover:bg-gray-50 rounded-lg transition-all duration-300"
+                            >
+                                <Bell className="h-5 w-5" />
+                                {unreadCount > 0 && (
+                                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold animate-pulse">
+                                        {unreadCount}
+                                    </span>
+                                )}
+                            </button>
+
+                            {/* Notifications Dropdown */}
+                            {showNotifications && (
+                                <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-2xl border border-gray-200 z-50">
+                                    <div className="p-4 border-b border-gray-100">
+                                        <h3 className="font-bold text-gray-800 flex items-center justify-between">
+                                            Notifications
+                                            <span className="text-xs bg-indigo-100 text-indigo-700 px-2 py-1 rounded-full">
+                                                {unreadCount} new
+                                            </span>
+                                        </h3>
+                                    </div>
+                                    <div className="max-h-64 overflow-y-auto">
+                                        {notifications.map(notification => (
+                                            <div
+                                                key={notification.id}
+                                                className={`p-3 border-b border-gray-50 hover:bg-gray-50 transition-colors ${
+                                                    notification.unread ? 'bg-blue-50' : ''
+                                                }`}
+                                            >
+                                                <p className="text-sm text-gray-800 font-medium">
+                                                    {notification.message}
+                                                </p>
+                                                <p className="text-xs text-gray-500 mt-1">{notification.time}</p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <div className="p-3 border-t border-gray-100">
+                                        <button className="text-sm text-indigo-600 hover:text-indigo-800 font-medium">
+                                            View all notifications
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* User Menu */}
+                        <div className="relative">
+                            <button
+                                onClick={() => setShowUserMenu(!showUserMenu)}
+                                className="flex items-center space-x-2 p-2 text-gray-600 hover:text-indigo-600 hover:bg-gray-50 rounded-lg transition-all duration-300"
+                            >
+                                <div className="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center">
+                                    <User className="h-4 w-4 text-indigo-600" />
+                                </div>
+                                <ChevronDown className="h-4 w-4 hidden sm:block" />
+                            </button>
+
+                            {/* User Dropdown */}
+                            {showUserMenu && (
+                                <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-2xl border border-gray-200 z-50">
+                                    <div className="p-3 border-b border-gray-100">
+                                        <p className="font-medium text-gray-800">Guest User</p>
+                                        <p className="text-xs text-gray-500">user@example.com</p>
+                                    </div>
+                                    <div className="py-2">
+                                        <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-2">
+                                            <Settings className="h-4 w-4" />
+                                            <span>Settings</span>
+                                        </button>
+                                        <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-2">
+                                            <ExternalLink className="h-4 w-4" />
+                                            <span>Help & Support</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Mobile Menu Button */}
+                        <button
+                            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                            className="lg:hidden p-2 text-gray-600 hover:text-indigo-600 hover:bg-gray-50 rounded-lg transition-all duration-300"
+                        >
+                            {isMobileMenuOpen ? (
+                                <div className="h-5 w-5 relative">
+                                    <div className="absolute inset-0 flex items-center justify-center">
+                                        <div className="w-4 h-0.5 bg-current transform rotate-45"></div>
+                                        <div className="w-4 h-0.5 bg-current transform -rotate-45"></div>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="h-5 w-5 flex flex-col justify-center space-y-1">
+                                    <div className="w-5 h-0.5 bg-current"></div>
+                                    <div className="w-5 h-0.5 bg-current"></div>
+                                    <div className="w-5 h-0.5 bg-current"></div>
+                                </div>
+                            )}
+                        </button>
                     </div>
                 </div>
-                <div className="flex items-center space-x-2">
-                    <button 
-                        onClick={() => navigate('/')} 
-                        className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-indigo-600 rounded-lg hover:bg-gray-50 transition-all duration-300"
-                    >
-                        <Home className="h-4 w-4 inline mr-2" />
-                        <span className="hidden sm:inline">Home</span>
-                    </button>
-                    <button 
-                        onClick={() => navigate('/lookup')} 
-                        className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-indigo-600 rounded-lg hover:bg-gray-50 transition-all duration-300"
-                    >
-                        <Search className="h-4 w-4 inline mr-2" />
-                        <span className="hidden sm:inline">My Complaints</span>
-                    </button>
-                    <button 
-                        onClick={() => navigate('/faq')} 
-                        className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-indigo-600 rounded-lg hover:bg-gray-50 transition-all duration-300"
-                    >
-                        <MessageCircle className="h-4 w-4 inline mr-2" />
-                        <span className="hidden sm:inline">FAQ</span>
-                    </button>
+
+                {/* Mobile Navigation Menu */}
+                {isMobileMenuOpen && (
+                    <div className="lg:hidden border-t border-gray-200 bg-white">
+                        <div className="py-4 space-y-2">
+                            {/* Mobile Search */}
+                            <div className="px-4 mb-4">
+                                <div className="flex items-center bg-gray-100 rounded-lg px-3 py-2">
+                                    <Search className="h-4 w-4 text-gray-400 mr-2" />
+                                    <input
+                                        type="text"
+                                        placeholder="Search complaints..."
+                                        className="bg-transparent border-0 focus:ring-0 text-sm flex-1 text-gray-700 placeholder-gray-500"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Mobile Navigation Items */}
+                            {navItems.map(({ path, label, icon: Icon }) => (
+                                <button
+                                    key={path}
+                                    onClick={() => {
+                                        navigate(path);
+                                        setIsMobileMenuOpen(false);
+                                    }}
+                                    className={`w-full flex items-center space-x-3 px-4 py-3 text-left transition-all duration-300 ${
+                                        isActivePath(path)
+                                            ? 'bg-indigo-50 text-indigo-700 border-r-4 border-indigo-500'
+                                            : 'text-gray-600 hover:bg-gray-50 hover:text-indigo-600'
+                                    }`}
+                                >
+                                    <Icon className="h-5 w-5" />
+                                    <span className="font-medium">{label}</span>
+                                </button>
+                            ))}
+
+                            {/* Mobile Staff Login */}
+                            <button
+                                onClick={() => {
+                                    navigate('/staff-login');
+                                    setIsMobileMenuOpen(false);
+                                }}
+                                className="w-full flex items-center space-x-3 px-4 py-3 text-left text-orange-700 hover:bg-orange-50 transition-all duration-300"
+                            >
+                                <Shield className="h-5 w-5" />
+                                <span className="font-medium">Staff Login</span>
+                            </button>
+
+                            {/* Emergency Contact in Mobile */}
+                            <div className="mx-4 mt-4 p-3 bg-red-50 rounded-lg border border-red-200">
+                                <div className="flex items-center space-x-2 text-red-700">
+                                    <Phone className="h-4 w-4" />
+                                    <span className="text-sm font-bold">Emergency: 139</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </nav>
+
+            {/* Status Bar */}
+            <div className="bg-green-50 border-b border-green-200 px-4 py-1">
+                <div className="container mx-auto flex items-center justify-between text-xs">
+                    <div className="flex items-center space-x-4">
+                        <div className="flex items-center space-x-1 text-green-700">
+                            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                            <span className="font-medium">System Operational</span>
+                        </div>
+                        <span className="text-gray-600">Last updated: 2 min ago</span>
+                    </div>
+                    <div className="hidden sm:flex items-center space-x-4 text-gray-600">
+                        <span>Avg Response: 18 hrs</span>
+                        <span>•</span>
+                        <span>94.2% Satisfaction</span>
+                    </div>
                 </div>
             </div>
-        </nav>
-    </header>
-);
+        </header>
+    );
+};
+
+
 
 const HomePage = ({ navigate }) => (
     <div className="space-y-12">

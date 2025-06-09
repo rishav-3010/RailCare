@@ -1,0 +1,397 @@
+-- Enhanced Railway Complaint Management System Database Schema
+
+-- Users Table (Enhanced)
+CREATE TABLE users (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    username VARCHAR(50) UNIQUE NOT NULL,
+    email VARCHAR(100) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    full_name VARCHAR(100) NOT NULL,
+    phone VARCHAR(15),
+    alternate_phone VARCHAR(15),
+    user_type ENUM('CUSTOMER', 'ADMIN', 'SUPPORT_AGENT', 'DEPARTMENT_HEAD', 'SUPERVISOR') DEFAULT 'CUSTOMER',
+    department_id BIGINT,
+    is_verified BOOLEAN DEFAULT FALSE,
+    is_active BOOLEAN DEFAULT TRUE,
+    last_login_at TIMESTAMP NULL,
+    profile_image VARCHAR(255),
+    address TEXT,
+    city VARCHAR(50),
+    state VARCHAR(50),
+    pincode VARCHAR(10),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_email (email),
+    INDEX idx_username (username),
+    INDEX idx_user_type (user_type)
+);
+
+-- Departments Table (Enhanced)
+CREATE TABLE departments (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(100) NOT NULL UNIQUE,
+    code VARCHAR(20) NOT NULL UNIQUE,
+    description TEXT,
+    email VARCHAR(100),
+    phone VARCHAR(15),
+    head_user_id BIGINT,
+    parent_department_id BIGINT,
+    is_active BOOLEAN DEFAULT TRUE,
+    sla_hours INT DEFAULT 24,
+    escalation_hours INT DEFAULT 48,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (head_user_id) REFERENCES users(id),
+    FOREIGN KEY (parent_department_id) REFERENCES departments(id),
+    INDEX idx_department_code (code)
+);
+
+-- Add foreign key to users table for department
+ALTER TABLE users ADD FOREIGN KEY (department_id) REFERENCES departments(id);
+
+-- Categories and Sub-categories Table
+CREATE TABLE complaint_categories (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(100) NOT NULL,
+    code VARCHAR(20) NOT NULL UNIQUE,
+    parent_category_id BIGINT,
+    description TEXT,
+    default_department_id BIGINT,
+    default_priority ENUM('LOW', 'MEDIUM', 'HIGH', 'URGENT', 'CRITICAL') DEFAULT 'MEDIUM',
+    sla_hours INT DEFAULT 24,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (parent_category_id) REFERENCES complaint_categories(id),
+    FOREIGN KEY (default_department_id) REFERENCES departments(id),
+    INDEX idx_category_code (code)
+);
+
+-- Stations Master Table
+CREATE TABLE stations (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    code VARCHAR(10) NOT NULL UNIQUE,
+    name VARCHAR(100) NOT NULL,
+    zone VARCHAR(50),
+    division VARCHAR(50),
+    state VARCHAR(50),
+    is_major_station BOOLEAN DEFAULT FALSE,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_station_code (code),
+    INDEX idx_zone (zone)
+);
+
+-- PNR Data Table (Enhanced)
+CREATE TABLE pnr_data (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    pnr_number VARCHAR(10) UNIQUE NOT NULL,
+    train_number VARCHAR(10),
+    train_name VARCHAR(100),
+    train_type VARCHAR(50),
+    journey_date DATE,
+    departure_time TIME,
+    arrival_time TIME,
+    origin_station_code VARCHAR(10),
+    destination_station_code VARCHAR(10),
+    origin_zone VARCHAR(50),
+    destination_zone VARCHAR(50),
+    class_of_travel VARCHAR(5),
+    booking_status VARCHAR(20),
+    passenger_count INT DEFAULT 1,
+    booking_date TIMESTAMP,
+    total_fare DECIMAL(10,2),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (origin_station_code) REFERENCES stations(code),
+    FOREIGN KEY (destination_station_code) REFERENCES stations(code),
+    INDEX idx_pnr (pnr_number),
+    INDEX idx_train_number (train_number),
+    INDEX idx_journey_date (journey_date)
+);
+
+-- Complaints Table (Enhanced)
+CREATE TABLE complaints (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    complaint_number VARCHAR(20) UNIQUE NOT NULL,
+    user_id BIGINT NOT NULL,
+    pnr_number VARCHAR(10),
+    title VARCHAR(200) NOT NULL,
+    complaint_text TEXT NOT NULL,
+    category_id BIGINT,
+    priority ENUM('LOW', 'MEDIUM', 'HIGH', 'URGENT', 'CRITICAL') DEFAULT 'MEDIUM',
+    status ENUM('SUBMITTED', 'ACKNOWLEDGED', 'IN_PROGRESS', 'PENDING_INFO', 'RESOLVED', 'CLOSED', 'REJECTED') DEFAULT 'SUBMITTED',
+    assigned_department_id BIGINT,
+    assigned_to BIGINT,
+    source_channel ENUM('WEB', 'MOBILE', 'PHONE', 'EMAIL', 'SOCIAL_MEDIA', 'IN_PERSON') DEFAULT 'WEB',
+    sentiment_score DECIMAL(3,2),
+    urgency_score INT DEFAULT 0,
+    customer_satisfaction_rating INT CHECK (customer_satisfaction_rating BETWEEN 1 AND 5),
+    resolution_date TIMESTAMP NULL,
+    resolution_notes TEXT,
+    attachments JSON,
+    tags JSON,
+    is_anonymous BOOLEAN DEFAULT FALSE,
+    follow_up_required BOOLEAN DEFAULT FALSE,
+    follow_up_date DATE,
+    sla_due_date TIMESTAMP,
+    escalation_level INT DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (category_id) REFERENCES complaint_categories(id),
+    FOREIGN KEY (assigned_department_id) REFERENCES departments(id),
+    FOREIGN KEY (assigned_to) REFERENCES users(id),
+    FOREIGN KEY (pnr_number) REFERENCES pnr_data(pnr_number),
+    INDEX idx_complaint_number (complaint_number),
+    INDEX idx_status (status),
+    INDEX idx_priority (priority),
+    INDEX idx_created_at (created_at),
+    INDEX idx_assigned_to (assigned_to),
+    INDEX idx_sla_due_date (sla_due_date)
+);
+
+-- Complaint History Table (Enhanced)
+CREATE TABLE complaint_history (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    complaint_id BIGINT NOT NULL,
+    action_type ENUM('CREATED', 'STATUS_CHANGED', 'ASSIGNED', 'REASSIGNED', 'PRIORITY_CHANGED', 'COMMENTED', 'ESCALATED', 'RESOLVED', 'CLOSED') NOT NULL,
+    previous_value TEXT,
+    new_value TEXT,
+    performed_by BIGINT,
+    notes TEXT,
+    system_generated BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (complaint_id) REFERENCES complaints(id) ON DELETE CASCADE,
+    FOREIGN KEY (performed_by) REFERENCES users(id),
+    INDEX idx_complaint_id (complaint_id),
+    INDEX idx_created_at (created_at)
+);
+
+-- Comments and Internal Notes
+CREATE TABLE complaint_comments (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    complaint_id BIGINT NOT NULL,
+    user_id BIGINT NOT NULL,
+    comment_text TEXT NOT NULL,
+    is_internal BOOLEAN DEFAULT FALSE,
+    is_customer_visible BOOLEAN DEFAULT TRUE,
+    attachments JSON,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (complaint_id) REFERENCES complaints(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    INDEX idx_complaint_id (complaint_id)
+);
+
+-- Rules Engine Table (Enhanced)
+CREATE TABLE complaint_rules (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    rule_name VARCHAR(100) NOT NULL,
+    rule_type ENUM('ASSIGNMENT', 'PRIORITY', 'ESCALATION', 'NOTIFICATION', 'SLA') NOT NULL,
+    condition_json JSON NOT NULL,
+    action_json JSON NOT NULL,
+    priority_order INT DEFAULT 100,
+    is_active BOOLEAN DEFAULT TRUE,
+    department_id BIGINT,
+    created_by BIGINT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (department_id) REFERENCES departments(id),
+    FOREIGN KEY (created_by) REFERENCES users(id),
+    INDEX idx_rule_type (rule_type),
+    INDEX idx_priority_order (priority_order)
+);
+
+-- Notifications Table
+CREATE TABLE notifications (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    user_id BIGINT NOT NULL,
+    complaint_id BIGINT,
+    notification_type ENUM('EMAIL', 'SMS', 'IN_APP', 'PUSH') NOT NULL,
+    title VARCHAR(200) NOT NULL,
+    message TEXT NOT NULL,
+    is_read BOOLEAN DEFAULT FALSE,
+    sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    read_at TIMESTAMP NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (complaint_id) REFERENCES complaints(id),
+    INDEX idx_user_id (user_id),
+    INDEX idx_is_read (is_read),
+    INDEX idx_sent_at (sent_at)
+);
+
+-- SLA Configuration Table
+CREATE TABLE sla_configurations (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    category_id BIGINT,
+    priority ENUM('LOW', 'MEDIUM', 'HIGH', 'URGENT', 'CRITICAL') NOT NULL,
+    response_time_hours INT NOT NULL,
+    resolution_time_hours INT NOT NULL,
+    escalation_time_hours INT NOT NULL,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (category_id) REFERENCES complaint_categories(id),
+    UNIQUE KEY unique_category_priority (category_id, priority)
+);
+
+-- Escalation Rules Table
+CREATE TABLE escalation_rules (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(100) NOT NULL,
+    condition_json JSON NOT NULL,
+    escalation_level INT NOT NULL,
+    escalate_to_user_id BIGINT,
+    escalate_to_department_id BIGINT,
+    notification_template TEXT,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (escalate_to_user_id) REFERENCES users(id),
+    FOREIGN KEY (escalate_to_department_id) REFERENCES departments(id)
+);
+
+-- FAQ and Knowledge Base
+CREATE TABLE knowledge_base (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    title VARCHAR(200) NOT NULL,
+    content TEXT NOT NULL,
+    category_id BIGINT,
+    tags JSON,
+    is_public BOOLEAN DEFAULT TRUE,
+    view_count INT DEFAULT 0,
+    helpful_count INT DEFAULT 0,
+    created_by BIGINT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (category_id) REFERENCES complaint_categories(id),
+    FOREIGN KEY (created_by) REFERENCES users(id),
+    FULLTEXT KEY ft_title_content (title, content)
+);
+
+-- Analytics and Reporting Tables
+CREATE TABLE complaint_analytics (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    date DATE NOT NULL,
+    department_id BIGINT,
+    category_id BIGINT,
+    total_complaints INT DEFAULT 0,
+    resolved_complaints INT DEFAULT 0,
+    avg_resolution_time_hours DECIMAL(8,2),
+    avg_satisfaction_rating DECIMAL(3,2),
+    sla_breached_count INT DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (department_id) REFERENCES departments(id),
+    FOREIGN KEY (category_id) REFERENCES complaint_categories(id),
+    UNIQUE KEY unique_date_dept_category (date, department_id, category_id)
+);
+
+-- File Attachments Table (Separate from JSON for better management)
+CREATE TABLE complaint_attachments (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    complaint_id BIGINT NOT NULL,
+    comment_id BIGINT,
+    file_name VARCHAR(255) NOT NULL,
+    file_path VARCHAR(500) NOT NULL,
+    file_size BIGINT,
+    file_type VARCHAR(50),
+    mime_type VARCHAR(100),
+    uploaded_by BIGINT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (complaint_id) REFERENCES complaints(id) ON DELETE CASCADE,
+    FOREIGN KEY (comment_id) REFERENCES complaint_comments(id) ON DELETE CASCADE,
+    FOREIGN KEY (uploaded_by) REFERENCES users(id),
+    INDEX idx_complaint_id (complaint_id)
+);
+
+-- System Configuration Table
+CREATE TABLE system_config (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    config_key VARCHAR(100) NOT NULL UNIQUE,
+    config_value TEXT NOT NULL,
+    description TEXT,
+    is_system BOOLEAN DEFAULT FALSE,
+    updated_by BIGINT,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (updated_by) REFERENCES users(id)
+);
+
+-- Audit Log Table
+CREATE TABLE audit_logs (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    table_name VARCHAR(50) NOT NULL,
+    record_id BIGINT NOT NULL,
+    action ENUM('INSERT', 'UPDATE', 'DELETE') NOT NULL,
+    old_values JSON,
+    new_values JSON,
+    user_id BIGINT,
+    ip_address VARCHAR(45),
+    user_agent TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    INDEX idx_table_record (table_name, record_id),
+    INDEX idx_created_at (created_at)
+);
+
+-- Customer Feedback Table
+CREATE TABLE customer_feedback (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    complaint_id BIGINT NOT NULL,
+    user_id BIGINT NOT NULL,
+    satisfaction_rating INT CHECK (satisfaction_rating BETWEEN 1 AND 5),
+    service_rating INT CHECK (service_rating BETWEEN 1 AND 5),
+    feedback_text TEXT,
+    would_recommend BOOLEAN,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (complaint_id) REFERENCES complaints(id),
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    UNIQUE KEY unique_complaint_feedback (complaint_id)
+);
+
+-- Performance Metrics View
+CREATE VIEW complaint_performance_metrics AS
+SELECT 
+    d.name as department_name,
+    cc.name as category_name,
+    COUNT(c.id) as total_complaints,
+    COUNT(CASE WHEN c.status = 'RESOLVED' THEN 1 END) as resolved_complaints,
+    COUNT(CASE WHEN c.sla_due_date < NOW() AND c.status NOT IN ('RESOLVED', 'CLOSED') THEN 1 END) as sla_breached,
+    AVG(CASE WHEN c.resolution_date IS NOT NULL 
+        THEN TIMESTAMPDIFF(HOUR, c.created_at, c.resolution_date) END) as avg_resolution_hours,
+    AVG(c.customer_satisfaction_rating) as avg_satisfaction_rating
+FROM complaints c
+LEFT JOIN departments d ON c.assigned_department_id = d.id
+LEFT JOIN complaint_categories cc ON c.category_id = cc.id
+WHERE c.created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+GROUP BY d.id, cc.id;
+
+-- Indexes for better performance
+CREATE INDEX idx_complaints_status_created ON complaints(status, created_at);
+CREATE INDEX idx_complaints_priority_created ON complaints(priority, created_at);
+CREATE INDEX idx_complaints_department_status ON complaints(assigned_department_id, status);
+CREATE INDEX idx_complaint_history_complaint_action ON complaint_history(complaint_id, action_type);
+
+-- Insert default system configurations
+INSERT INTO system_config (config_key, config_value, description, is_system) VALUES
+('default_sla_hours', '24', 'Default SLA hours for new complaints', TRUE),
+('max_file_upload_size', '10485760', 'Maximum file upload size in bytes (10MB)', TRUE),
+('allowed_file_types', '["jpg","jpeg","png","pdf","doc","docx","txt"]', 'Allowed file types for attachments', TRUE),
+('auto_escalation_enabled', 'true', 'Enable automatic escalation of complaints', TRUE),
+('notification_email_enabled', 'true', 'Enable email notifications', FALSE);
+
+-- Function to generate complaint number
+DELIMITER //
+CREATE FUNCTION generate_complaint_number() 
+RETURNS VARCHAR(20)
+READS SQL DATA
+DETERMINISTIC
+BEGIN
+    DECLARE next_id INT;
+    DECLARE complaint_num VARCHAR(20);
+    
+    SELECT AUTO_INCREMENT INTO next_id
+    FROM information_schema.TABLES
+    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'complaints';
+    
+    SET complaint_num = CONCAT('CMP', YEAR(NOW()), LPAD(next_id, 6, '0'));
+    
+    RETURN complaint_num;
+END //
+DELIMITER ;

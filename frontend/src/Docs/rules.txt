@@ -1,0 +1,426 @@
+# Comprehensive Rule Set for Complaint Processing Engine
+
+## 1. Content-Based Routing Rules
+
+### 1.1 Keyword-Based Rules
+```
+// Financial/Payment Issues
+IF complaint_text CONTAINS "refund" OR "money not credited" OR "double charge" OR "payment failed" OR "amount deducted" 
+THEN CATEGORIZE_AS "Financial" AND ASSIGN_TO "Finance_Refund_Team" AND SET_PRIORITY "High"
+
+IF complaint_text CONTAINS "erroneous charge" OR "wrong deduction" OR "overcharged" 
+THEN CATEGORIZE_AS "Financial" AND ASSIGN_TO "Finance_Dispute_Team" AND SET_PRIORITY "High"
+
+// Catering Issues
+IF complaint_text CONTAINS "food quality" OR "bad food" OR "unhygienic meal" OR "stale food" OR "no food provided"
+THEN CATEGORIZE_AS "Catering" AND ASSIGN_TO "Catering_Quality_Team" AND SET_PRIORITY "Medium"
+
+IF complaint_text CONTAINS "overpriced food" OR "expensive meal" OR "food cost"
+THEN CATEGORIZE_AS "Catering" AND ASSIGN_TO "Catering_Pricing_Team" AND SET_PRIORITY "Low"
+
+// Staff Behavior
+IF complaint_text CONTAINS "TTE misbehaved" OR "staff rude" OR "employee misconduct" OR "harassment" OR "inappropriate behavior"
+THEN CATEGORIZE_AS "Staff_Behavior" AND ASSIGN_TO "HR_Disciplinary_Team" AND SET_PRIORITY "High"
+
+IF complaint_text CONTAINS "helpful staff" OR "good service" OR "courteous behavior"
+THEN CATEGORIZE_AS "Staff_Appreciation" AND ASSIGN_TO "HR_Recognition_Team" AND SET_PRIORITY "Low"
+
+// Technical Issues
+IF complaint_text CONTAINS "website error" OR "app crash" OR "login failed" OR "server down" OR "booking failed"
+THEN CATEGORIZE_AS "Technical" AND ASSIGN_TO "IT_Support_Level1" AND SET_PRIORITY "Medium"
+
+IF complaint_text CONTAINS "payment gateway error" OR "transaction failed" OR "OTP not received"
+THEN CATEGORIZE_AS "Technical" AND ASSIGN_TO "Payment_Gateway_Support" AND SET_PRIORITY "High"
+
+// Safety & Security
+IF complaint_text CONTAINS "safety concern" OR "security threat" OR "theft" OR "harassment" OR "emergency"
+THEN CATEGORIZE_AS "Safety_Security" AND ASSIGN_TO "RPF_Security_Team" AND SET_PRIORITY "Urgent"
+
+IF complaint_text CONTAINS "child missing" OR "woman safety" OR "fire" OR "accident" OR "medical emergency"
+THEN CATEGORIZE_AS "Emergency" AND ASSIGN_TO "Emergency_Response_Team" AND SET_PRIORITY "Critical"
+
+// Cleanliness & Maintenance
+IF complaint_text CONTAINS "dirty coach" OR "unclean toilet" OR "poor hygiene" OR "garbage" OR "smell"
+THEN CATEGORIZE_AS "Cleanliness" AND ASSIGN_TO "Coaching_Maintenance_Team" AND SET_PRIORITY "Medium"
+
+IF complaint_text CONTAINS "AC not working" OR "fan not working" OR "no power" OR "electrical issue"
+THEN CATEGORIZE_AS "Electrical_Maintenance" AND ASSIGN_TO "Electrical_Team" AND SET_PRIORITY "Medium"
+
+// Booking & Ticketing
+IF complaint_text CONTAINS "booking failed" OR "seat not available" OR "waitlist" OR "confirmation issue"
+THEN CATEGORIZE_AS "Booking" AND ASSIGN_TO "Booking_Support_Team" AND SET_PRIORITY "Medium"
+
+IF complaint_text CONTAINS "tatkal booking" OR "premium tatkal" OR "tatkal failed"
+THEN CATEGORIZE_AS "Tatkal_Booking" AND ASSIGN_TO "Tatkal_Support_Team" AND SET_PRIORITY "High"
+```
+
+### 1.2 Sentiment-Based Rules
+```
+IF complaint_sentiment_score < -0.7 AND complaint_source IS "Social_Media"
+THEN CATEGORIZE_AS "Public_Relations" AND ASSIGN_TO "Social_Media_Crisis_Team" AND SET_PRIORITY "Urgent"
+
+IF complaint_sentiment_score > 0.5
+THEN CATEGORIZE_AS "Positive_Feedback" AND ASSIGN_TO "Customer_Relations_Team" AND SET_PRIORITY "Low"
+
+IF complaint_contains_profanity OR abusive_language_detected
+THEN FLAG_FOR "Content_Moderation" AND ASSIGN_TO "Moderation_Team" AND SET_PRIORITY "Medium"
+```
+
+## 2. PNR-Data-Based Routing Rules
+
+### 2.1 Train Type/Service Level Rules
+```
+// Premium Train Services
+IF PNR_train_type IN ["Rajdhani", "Shatabdi", "Vande_Bharat", "Tejas"] AND complaint_category IS "Catering"
+THEN ASSIGN_TO "Premium_Catering_Team" AND SET_PRIORITY "High"
+
+IF PNR_train_type IN ["Rajdhani", "Shatabdi", "Vande_Bharat"] AND complaint_category IS "Cleanliness"
+THEN ASSIGN_TO "Premium_Maintenance_Team" AND SET_PRIORITY "High"
+
+// AC Classes
+IF PNR_class IN ["1A", "2A", "3A", "CC"] AND complaint_text CONTAINS "temperature" OR "cooling"
+THEN ASSIGN_TO "AC_Maintenance_Team" AND SET_PRIORITY "Medium"
+
+// Sleeper and General Classes
+IF PNR_class IN ["SL", "2S", "General"] AND complaint_category IS "Overcrowding"
+THEN ASSIGN_TO "Passenger_Accommodation_Team" AND SET_PRIORITY "Medium"
+```
+
+### 2.2 Journey Timing Rules
+```
+// Immediate Journey Issues
+IF PNR_journey_date IS_WITHIN_NEXT 6_hours AND complaint_category IS "Booking_Confirmation"
+THEN ASSIGN_TO "Urgent_Ticketing_Support" AND SET_PRIORITY "Critical"
+
+IF PNR_journey_date IS_WITHIN_NEXT 24_hours AND complaint_category IS "Cancellation"
+THEN ASSIGN_TO "Emergency_Cancellation_Team" AND SET_PRIORITY "Urgent"
+
+// Post-Journey Issues
+IF PNR_journey_date IS_PAST 3_days AND complaint_category IS "Service_Feedback"
+THEN ASSIGN_TO "Post_Journey_Analysis_Team" AND SET_PRIORITY "Low"
+```
+
+### 2.3 Route/Zone-Based Rules
+```
+// Zonal Assignment
+IF PNR_origin_zone IS "Northern_Railway" AND complaint_category IS "Station_Amenities"
+THEN ASSIGN_TO "NR_Station_Management" AND ADD_TAG "Northern_Railway"
+
+IF PNR_origin_zone IS "Southern_Railway" AND complaint_category IS "Station_Amenities"
+THEN ASSIGN_TO "SR_Station_Management" AND ADD_TAG "Southern_Railway"
+
+// High-Traffic Routes
+IF PNR_route IN ["Delhi-Mumbai", "Delhi-Kolkata", "Mumbai-Chennai"] AND complaint_category IS "Booking_Difficulty"
+THEN ASSIGN_TO "High_Density_Route_Support" AND SET_PRIORITY "Medium"
+```
+
+## 3. Web Portal Source-Based Routing Rules
+
+### 3.1 Portal Section-Based Rules
+```
+IF complaint_submitted_from "Emergency_Section" OR complaint_marked_as "Urgent_Help"
+THEN CATEGORIZE_AS "Emergency" AND ASSIGN_TO "Emergency_Response_Team" AND SET_PRIORITY "Critical" AND TRIGGER_ALERT
+
+IF complaint_submitted_from "Feedback_Section" AND complaint_type IS "Suggestion"
+THEN ASSIGN_TO "Customer_Feedback_Team" AND SET_PRIORITY "Low"
+
+IF complaint_submitted_from "Technical_Issues_Section"
+THEN ASSIGN_TO "Web_Portal_Technical_Support" AND SET_PRIORITY "Medium"
+```
+
+### 3.2 Web Portal User Authentication Rules
+```
+IF user_login_type IS "Guest_User" AND complaint_category IS "Booking_Issue"
+THEN ASSIGN_TO "Guest_User_Support" AND SET_PRIORITY "Medium" AND FLAG_FOR "Identity_Verification"
+
+IF user_login_type IS "Registered_User" AND user_verification_status IS "Verified"
+THEN INCREASE_PRIORITY_BY_ONE_LEVEL AND ASSIGN_TO "Verified_User_Support"
+
+IF user_login_type IS "Premium_Member" OR user_has_frequent_traveler_status
+THEN ASSIGN_TO "Premium_User_Support" AND SET_PRIORITY "High"
+```
+
+### 3.3 Web Form Submission Rules
+```
+IF complaint_form_type IS "Quick_Complaint" AND complaint_text_length < 100
+THEN ASSIGN_TO "Quick_Resolution_Team" AND SET_PRIORITY "Medium"
+
+IF complaint_form_type IS "Detailed_Complaint" AND attachments_included
+THEN ASSIGN_TO "Detailed_Analysis_Team" AND SET_PRIORITY "Medium"
+
+IF complaint_submitted_with_supporting_documents
+THEN ASSIGN_TO "Document_Review_Team" AND SET_PRIORITY "High"
+```
+
+## 4. Priority Derivation Rules
+
+### 4.1 Critical Priority Rules
+```
+IF complaint_text CONTAINS "child_missing" OR "medical_emergency" OR "fire" OR "accident" OR "bomb_threat"
+THEN SET_PRIORITY "Critical" AND TRIGGER_IMMEDIATE_ALERT
+
+IF complaint_text CONTAINS "woman_harassment" OR "sexual_misconduct" OR "safety_threat"
+THEN SET_PRIORITY "Critical" AND ASSIGN_TO "Women_Safety_Cell"
+
+IF complaint_text CONTAINS "train_derailment" OR "signal_failure" OR "track_obstruction"
+THEN SET_PRIORITY "Critical" AND ASSIGN_TO "Operations_Emergency_Team"
+```
+
+### 4.2 High Priority Rules
+```
+IF complaint_text CONTAINS "payment_deducted_no_ticket" OR "double_charge" OR "refund_pending_30_days"
+THEN SET_PRIORITY "High"
+
+IF complaint_text CONTAINS "reservation_cancelled_wrongly" OR "ticket_booking_failed_tatkal"
+THEN SET_PRIORITY "High"
+
+IF user_is_senior_citizen OR user_is_differently_abled OR user_is_pregnant_woman
+THEN INCREASE_PRIORITY_BY_ONE_LEVEL
+```
+
+### 4.3 Medium Priority Rules
+```
+IF complaint_text CONTAINS "AC_not_working" OR "water_shortage" OR "delayed_train"
+THEN SET_PRIORITY "Medium"
+
+IF complaint_category IS "Cleanliness" OR "Food_Quality" OR "Staff_Behavior"
+THEN SET_PRIORITY "Medium"
+```
+
+### 4.4 Low Priority Rules
+```
+IF complaint_text CONTAINS "suggestion" OR "general_inquiry" OR "information_request"
+THEN SET_PRIORITY "Low"
+
+IF complaint_category IS "Appreciation" OR "Positive_Feedback"
+THEN SET_PRIORITY "Low"
+```
+
+## 5. Specialized Department Rules
+
+### 5.1 IRCTC-Specific Rules
+```
+IF complaint_category IS "E_Catering" OR complaint_text CONTAINS "food_delivery_train"
+THEN ASSIGN_TO "IRCTC_E_Catering_Team"
+
+IF complaint_category IS "Tourism_Package" OR complaint_text CONTAINS "tour_booking"
+THEN ASSIGN_TO "IRCTC_Tourism_Division"
+
+IF complaint_category IS "Rail_Connect" OR complaint_text CONTAINS "wifi_issue"
+THEN ASSIGN_TO "IRCTC_Rail_Connect_Team"
+```
+
+### 5.2 Web Portal Technical Support Rules
+```
+IF complaint_text CONTAINS "NGET_error" OR "gateway_timeout" OR "server_error" OR "portal_down"
+THEN ASSIGN_TO "Web_Portal_Backend_Support"
+
+IF complaint_text CONTAINS "login_failed" OR "session_expired" OR "password_reset"
+THEN ASSIGN_TO "User_Authentication_Support"
+
+IF complaint_text CONTAINS "page_not_loading" OR "slow_portal" OR "browser_compatibility"
+THEN ASSIGN_TO "Frontend_Technical_Support"
+
+IF complaint_text CONTAINS "file_upload_failed" OR "attachment_error" OR "form_submission_failed"
+THEN ASSIGN_TO "Portal_Functionality_Support"
+```
+
+### 5.3 Commercial Department Rules
+```
+IF complaint_category IS "Unreserved_Ticketing" OR complaint_text CONTAINS "season_pass"
+THEN ASSIGN_TO "Commercial_Unreserved_Section"
+
+IF complaint_category IS "Freight_Services" OR complaint_text CONTAINS "goods_booking"
+THEN ASSIGN_TO "Commercial_Freight_Section"
+
+IF complaint_category IS "Platform_Ticket" OR complaint_text CONTAINS "entry_fee"
+THEN ASSIGN_TO "Commercial_Station_Section"
+```
+
+## 6. Time-Based and SLA Rules
+
+### 6.1 Web Portal Time-Sensitive Rules
+```
+IF current_time IS_BETWEEN "10:00" AND "12:00" AND complaint_category IS "Tatkal_Booking" AND portal_traffic_high
+THEN ASSIGN_TO "Peak_Hours_Booking_Support" AND SET_PRIORITY "Urgent"
+
+IF current_time IS_BETWEEN "22:00" AND "06:00" AND complaint_priority IS "Critical"
+THEN ASSIGN_TO "Night_Support_Team" AND ADD_TAG "After_Hours_Critical"
+
+IF complaint_lodged_on_weekend AND complaint_category IS "Web_Portal_Issue"
+THEN ASSIGN_TO "Weekend_Technical_Support" AND SET_SLA 24_hours
+
+IF portal_maintenance_window_active AND complaint_category IS "Technical"
+THEN ASSIGN_TO "Maintenance_Support_Team" AND ADD_TAG "Maintenance_Related"
+```
+
+### 6.2 SLA-Based Rules
+```
+IF complaint_category IS "Refund" AND days_since_cancellation > 15
+THEN FLAG_FOR "SLA_Breach_Review" AND ASSIGN_TO "Refund_Escalation_Team"
+
+IF complaint_category IS "Booking_Failure" AND complaint_lodged_during_tatkal_hours
+THEN SET_SLA 2_hours AND ASSIGN_TO "Tatkal_Immediate_Response_Team"
+
+IF complaint_priority IS "Critical" AND response_time > 30_minutes
+THEN TRIGGER_ESCALATION_TO "Senior_Management"
+```
+
+## 7. Combined Criteria Rules
+
+### 7.1 Multi-Factor Rules
+```
+IF (complaint_category IS "Catering" AND PNR_train_type IS "Premium" AND complaint_sentiment < -0.5)
+THEN ASSIGN_TO "Premium_Service_Recovery_Team" AND SET_PRIORITY "High"
+
+IF (user_is_frequent_traveler AND complaint_count_last_30_days > 3 AND complaint_category IS "Technical")
+THEN ASSIGN_TO "Frequent_User_Technical_Support" AND SET_PRIORITY "High"
+
+IF (complaint_source IS "Social_Media" AND engagement_rate > 50 AND complaint_category IS "Service_Failure")
+THEN ASSIGN_TO "Public_Relations_Crisis_Team" AND SET_PRIORITY "Urgent"
+```
+
+### 7.2 Pattern-Based Rules
+```
+IF (complaint_text CONTAINS "same_issue" AND user_previous_complaints > 2 AND complaint_category_matches_previous)
+THEN ASSIGN_TO "Repeat_Issue_Resolution_Team" AND SET_PRIORITY "High"
+
+IF (complaint_category IS "Payment_Failure" AND payment_gateway_error_rate > 5% AND current_hour IS_PEAK_BOOKING)
+THEN ASSIGN_TO "Payment_Gateway_Emergency_Team" AND TRIGGER_SYSTEM_ALERT
+```
+
+## 8. Fallback and Default Rules
+
+### 8.1 Unmatched Complaint Rules
+```
+IF no_specific_rule_matches AND complaint_text_length > 500
+THEN ASSIGN_TO "Complex_Issue_Analysis_Team" AND SET_PRIORITY "Medium" AND FLAG_FOR_MANUAL_REVIEW
+
+IF no_specific_rule_matches AND complaint_text_length <= 50
+THEN ASSIGN_TO "General_Inquiry_Team" AND SET_PRIORITY "Low"
+
+DEFAULT_RULE: ASSIGN_TO "General_Grievance_Cell" AND SET_PRIORITY "Medium" AND FLAG_FOR_CATEGORIZATION_REVIEW
+```
+
+### 8.2 Error Handling Rules
+```
+IF PNR_data_unavailable AND complaint_category IS "Journey_Related"
+THEN ASSIGN_TO "PNR_Verification_Team" AND SET_PRIORITY "Medium"
+
+IF user_data_incomplete AND complaint_priority IS "Critical"
+THEN ASSIGN_TO "Emergency_Response_Team" AND REQUEST_USER_DETAILS
+
+IF complaint_language_not_detected
+THEN ASSIGN_TO "Multi_Language_Support_Team" AND SET_PRIORITY "Medium"
+```
+
+## 9. Special Category Rules
+
+### 9.1 VIP/Special Passenger Rules
+```
+IF user_category IS "Railway_Employee" OR "Ex_Railway_Employee"
+THEN ASSIGN_TO "Employee_Grievance_Cell" AND ADD_TAG "Internal_User"
+
+IF user_category IS "Armed_Forces" OR "Freedom_Fighter"
+THEN ASSIGN_TO "Special_Category_Support" AND SET_PRIORITY "High"
+
+IF user_category IS "MP" OR "MLA" OR "Government_Official"
+THEN ASSIGN_TO "VIP_Complaint_Cell" AND SET_PRIORITY "Urgent"
+```
+
+### 9.2 Accessibility Rules
+```
+IF complaint_text CONTAINS "wheelchair_access" OR "disabled_facilities"
+THEN ASSIGN_TO "Accessibility_Support_Team" AND SET_PRIORITY "High"
+
+IF user_is_visually_impaired AND complaint_category IS "Digital_Services"
+THEN ASSIGN_TO "Accessibility_Digital_Team" AND SET_PRIORITY "High"
+
+IF complaint_category IS "Senior_Citizen_Services"
+THEN ASSIGN_TO "Senior_Citizen_Support_Team" AND SET_PRIORITY "Medium"
+```
+
+## 10. Monitoring and Analytics Rules
+
+### 10.1 Trend Detection Rules
+```
+IF same_complaint_type_count_last_24_hours > 50
+THEN TRIGGER_TREND_ALERT AND ASSIGN_TO "Operations_Analytics_Team"
+
+IF complaint_category_spike_detected AND increase_percentage > 200%
+THEN TRIGGER_SYSTEM_ISSUE_ALERT AND ESCALATE_TO "System_Monitoring_Team"
+```
+
+### 10.2 Quality Assurance Rules
+```
+IF complaint_resolution_time > SLA_limit
+THEN FLAG_FOR "Quality_Review" AND NOTIFY_SUPERVISOR
+
+IF customer_satisfaction_score < 3.0
+THEN ASSIGN_TO "Customer_Experience_Improvement_Team" AND SCHEDULE_FOLLOWUP
+```
+
+## 11. Web Portal Specific Rules
+
+### 11.1 Browser and Device-Based Rules
+```
+IF user_browser IS "Internet_Explorer" AND complaint_category IS "Technical"
+THEN ASSIGN_TO "Legacy_Browser_Support" AND ADD_TAG "Browser_Compatibility_Issue"
+
+IF user_device_type IS "Mobile" AND complaint_text CONTAINS "layout_issue" OR "display_problem"
+THEN ASSIGN_TO "Mobile_Responsive_Support" AND SET_PRIORITY "Medium"
+
+IF user_connection_type IS "Slow" AND complaint_category IS "Portal_Performance"
+THEN ASSIGN_TO "Low_Bandwidth_Support" AND SET_PRIORITY "Medium"
+```
+
+### 11.2 Portal Feature-Based Rules
+```
+IF complaint_related_to "Online_Booking_Module"
+THEN ASSIGN_TO "Booking_System_Support" AND SET_PRIORITY "High"
+
+IF complaint_related_to "Payment_Gateway_Integration"
+THEN ASSIGN_TO "Payment_Integration_Support" AND SET_PRIORITY "High"
+
+IF complaint_related_to "PNR_Status_Check"
+THEN ASSIGN_TO "PNR_System_Support" AND SET_PRIORITY "Medium"
+
+IF complaint_related_to "User_Profile_Management"
+THEN ASSIGN_TO "User_Account_Support" AND SET_PRIORITY "Low"
+
+IF complaint_related_to "Complaint_Tracking_System"
+THEN ASSIGN_TO "Portal_Meta_Support" AND SET_PRIORITY "Medium"
+```
+
+### 11.3 Web Portal User Journey Rules
+```
+IF user_session_duration < 2_minutes AND complaint_category IS "Usability"
+THEN ASSIGN_TO "UX_Improvement_Team" AND SET_PRIORITY "Medium"
+
+IF user_page_bounce_rate > 80% AND complaint_category IS "Navigation"
+THEN ASSIGN_TO "Portal_Navigation_Team" AND SET_PRIORITY "Medium"
+
+IF user_completed_transaction_partially AND complaint_category IS "Booking_Failure"
+THEN ASSIGN_TO "Transaction_Recovery_Team" AND SET_PRIORITY "High"
+```
+
+### 11.4 Portal Security Rules
+```
+IF complaint_text CONTAINS "account_hacked" OR "unauthorized_access" OR "data_breach"
+THEN ASSIGN_TO "Cybersecurity_Team" AND SET_PRIORITY "Critical" AND TRIGGER_SECURITY_ALERT
+
+IF complaint_text CONTAINS "phishing" OR "fake_website" OR "suspicious_link"
+THEN ASSIGN_TO "Security_Awareness_Team" AND SET_PRIORITY "High"
+
+IF multiple_failed_login_attempts_reported
+THEN ASSIGN_TO "Account_Security_Team" AND SET_PRIORITY "Medium"
+```
+
+1. **Rule Priority**: Rules are processed in order of specificity (most specific first)
+2. **Rule Conflicts**: Later matching rules can override earlier assignments
+3. **Multiple Assignments**: Complex complaints can be assigned to multiple teams
+4. **Dynamic Updates**: Rules can be modified based on operational feedback
+5. **A/B Testing**: Alternative rule sets can be tested with percentage traffic splits
+6. **Regional Customization**: Rules can be customized for different railway zones
+7. **Seasonal Adjustments**: Rules can be temporarily modified during peak seasons
+8. **Performance Monitoring**: Rule effectiveness should be tracked and optimized

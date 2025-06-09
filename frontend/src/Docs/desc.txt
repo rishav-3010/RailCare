@@ -1,0 +1,941 @@
+Based on your smart category suggestion system, here are several sample detailed descriptions you can test, along with their expected results:
+
+## **Sample 1: Refund Issue (High Confidence)**
+
+### **Sample Description:**
+```
+I booked a ticket for train 12002 Shatabdi Express from New Delhi to Bhopal on June 15th. The payment was deducted from my credit card but the ticket booking failed due to a server error. The transaction ID is TXN123456789. I have been waiting for 5 days but the refund has not been processed yet. The amount of Rs. 2,350 was wrongly deducted and I need an urgent refund as this is causing financial inconvenience. I tried calling customer care but they said the refund will take 7-10 working days which is unacceptable.
+```
+
+### **Expected Result:**
+- **Suggested Category:** `Refund`
+- **Confidence Score:** ~85-90%
+- **Matched Keywords:** "payment was deducted", "refund", "wrongly deducted", "urgent refund", "booking failed"
+- **Priority:** High (due to financial keywords)
+- **AI Suggestion Display:** Blue suggestion box with "Smart Category Suggestion" showing Refund category
+
+---
+
+## **Sample 2: Food Quality Issue (High Confidence)**
+
+### **Sample Description:**
+```
+I traveled on Vande Bharat Express (train number 22439) from Mumbai to Ahmedabad yesterday. The food quality served during the journey was absolutely terrible. The meal was stale and cold, and the chicken curry had a bad smell. My co-passengers also complained about the unhygienic meal. The food cost was Rs. 200 but the quality was unacceptable for a premium service. The catering staff was also rude when we complained. This poor food quality spoiled our entire journey experience.
+```
+
+### **Expected Result:**
+- **Suggested Category:** `Catering`
+- **Confidence Score:** ~90-95%
+- **Matched Keywords:** "food quality", "stale", "bad smell", "unhygienic meal", "food cost", "catering"
+- **Priority:** Medium
+- **AI Suggestion Display:** Green/blue suggestion showing Catering & Food category
+
+---
+
+## **Sample 3: Staff Behavior Issue (High Confidence)**
+
+### **Sample Description:**
+```
+During my journey on 12952 Mumbai Rajdhani Express, the TTE misbehaved with me and other passengers. He was very rude and used inappropriate language when checking tickets. The ticket collector demanded extra money for seat confirmation even though I had a confirmed ticket. This employee misconduct is unacceptable and the staff behavior was completely unprofessional. Other passengers were also harassed by this conductor. His badge number was TC/001234.
+```
+
+### **Expected Result:**
+- **Suggested Category:** `Staff Behavior`
+- **Confidence Score:** ~85-90%
+- **Matched Keywords:** "TTE misbehaved", "rude", "inappropriate", "employee misconduct", "staff behavior", "unprofessional", "conductor"
+- **Priority:** High (due to harassment keywords)
+- **AI Suggestion Display:** Red/orange suggestion showing Staff Behavior category
+
+---
+
+## **Sample 4: Technical Issue (High Confidence)**
+
+### **Sample Description:**
+```
+I am facing a technical issue with the IRCTC website. Every time I try to book tickets, the website error occurs and the page crashes. The login failed multiple times and when I finally logged in, the booking failed at payment gateway. I also didn't receive the OTP for completing the transaction. This system error has been happening for the past 3 days. The portal problem is preventing me from booking urgent tickets for my travel tomorrow.
+```
+
+### **Expected Result:**
+- **Suggested Category:** `Technical`
+- **Confidence Score:** ~90-95%
+- **Matched Keywords:** "technical issue", "website error", "login failed", "booking failed", "payment gateway", "OTP not received", "system error", "portal problem"
+- **Priority:** Medium-High
+- **AI Suggestion Display:** Blue suggestion showing Website/App Technical Issue category
+
+---
+
+## **Sample 5: Mixed Keywords (Lower Confidence)**
+
+### **Sample Description:**
+```
+I had a general inquiry about train timings and platform information. The staff at the station provided some guidance but I need more information about connecting trains. Can someone help me with the schedule and booking process for tomorrow's journey?
+```
+
+### **Expected Result:**
+- **Suggested Category:** `Ticketing & Booking` (low confidence)
+- **Confidence Score:** ~20-30%
+- **Matched Keywords:** "booking"
+- **Priority:** Low
+- **AI Suggestion Display:** Might show a weak suggestion or no suggestion due to low confidence
+
+
+
+
+const CATEGORY_KEYWORDS = {
+    'Emergency': {
+        subcategories: [
+            {
+                name: 'Critical Emergencies',
+                keywords: [
+                    'medical emergency', 'fire', 'accident', 'bomb threat', 'child missing',
+                    'emergency', 'urgent help', 'critical', 'life threatening', 'serious injury',
+                    'heart attack', 'stroke', 'unconscious', 'bleeding', 'fracture', 'ambulance',
+                    'hospital', 'doctor needed', 'first aid', 'oxygen', 'ventilator', 'ICU',
+                    'train derailment', 'signal failure', 'track obstruction', 'collision',
+                    'fire in train', 'smoke', 'electrical fire', 'gas leak', 'explosion'
+                ],
+                departments: ['Emergency Response Team']
+            },
+            {
+                name: 'Natural Disasters',
+                keywords: [
+                    'flood', 'earthquake', 'cyclone', 'landslide', 'storm', 'heavy rain',
+                    'bridge collapse', 'track damage', 'evacuation', 'rescue', 'stranded'
+                ],
+                departments: ['Operations Emergency Team']
+            }
+        ],
+        priority: 'critical',
+        confidence: 0.95
+    },
+
+    'Safety & Security': {
+        subcategories: [
+            {
+                name: 'Security Threats',
+                keywords: [
+                    'theft', 'robbery', 'pickpocket', 'chain snatching', 'bag stolen', 'mobile stolen',
+                    'security threat', 'suspicious person', 'suspicious activity', 'terrorist',
+                    'weapon', 'knife', 'gun', 'violence', 'fight', 'assault', 'attack'
+                ],
+                departments: ['RPF Security Team']
+            },
+            {
+                name: 'Women Safety',
+                keywords: [
+                    'harassment', 'woman safety', 'sexual misconduct', 'eve teasing', 'stalking',
+                    'inappropriate touching', 'molestation', 'rape', 'sexual assault', 'indecent behavior',
+                    'ladies compartment', 'women coach', 'gender discrimination'
+                ],
+                departments: ['Women Safety Cell']
+            },
+            {
+                name: 'General Safety',
+                keywords: [
+                    'safety concern', 'unsafe', 'danger', 'risk', 'hazard', 'accident prone',
+                    'safety equipment', 'emergency chain', 'alarm chain', 'guard', 'RPF',
+                    'police', 'security', 'CCTV', 'surveillance', 'patrol', 'investigation'
+                ],
+                departments: ['Account Security Team']
+            },
+            {
+                name: 'Child Safety',
+                keywords: [
+                    'child safety', 'minor', 'unaccompanied child', 'child abuse', 'kidnapping',
+                    'lost child', 'missing child', 'child trafficking', 'child protection'
+                ],
+                departments: ['Account Security Team']
+            }
+        ],
+        priority: 'urgent',
+        confidence: 0.9
+    },
+
+    'Refund & Financial': {
+        subcategories: [
+            {
+                name: 'Refund Issues',
+                keywords: [
+                    'refund', 'money not credited', 'refund pending', 'refund delayed', 'refund not received',
+                    'refund policy', 'cancellation refund', 'TDR', 'ticket deposit receipt',
+                    'refund amount wrong', 'partial refund', 'full refund', 'refund status'
+                ],
+                departments: ['Finance Refund Team']
+            },
+            {
+                name: 'Payment Issues',
+                keywords: [
+                    'double charge', 'multiple deduction', 'duplicate payment', 'payment failed',
+                    'amount deducted', 'money deducted', 'payment not processed', 'transaction failed',
+                    'payment gateway error', 'payment declined', 'card declined', 'UPI failed',
+                    'net banking failed', 'wallet payment failed', 'EMI failed'
+                ],
+                departments: ['Payment Gateway Support']
+            },
+            {
+                name: 'Erroneous Charges',
+                keywords: [
+                    'erroneous charge', 'wrong deduction', 'overcharged', 'extra charge',
+                    'unauthorized deduction', 'incorrect amount', 'billing error', 'fare difference',
+                    'service charge', 'convenience fee', 'processing fee', 'hidden charges'
+                ],
+                departments: ['Finance Dispute Team']
+            },
+            {
+                name: 'Financial Disputes',
+                keywords: [
+                    'dispute', 'chargeback', 'bank statement', 'transaction history',
+                    'payment proof', 'receipt', 'invoice', 'billing complaint'
+                ],
+                departments: ['Finance Dispute Team']
+            },
+            {
+                name: 'Specific Payment Methods',
+                keywords: [
+                    'credit card', 'debit card', 'net banking', 'UPI', 'paytm', 'phonepe',
+                    'google pay', 'bhim', 'wallet', 'cash on delivery', 'EMI', 'loan'
+                ],
+                departments: ['Payment Gateway Support']
+            }
+        ],
+        priority: 'high',
+        confidence: 0.9
+    },
+
+    'Ticketing & Booking': {
+        subcategories: [
+            {
+                name: 'Booking Failures',
+                keywords: [
+                    'booking failed', 'booking error', 'booking not confirmed', 'booking cancelled',
+                    'booking problem', 'unable to book', 'booking timeout', 'session expired',
+                    'booking declined', 'booking rejected', 'booking pending', 'booking stuck'
+                ],
+                departments: ['Booking Support Team']
+            },
+            {
+                name: 'Reservation Issues',
+                keywords: [
+                    'reservation', 'seat not available', 'berth not available', 'no seats',
+                    'waitlist', 'waiting list', 'WL', 'confirmation', 'CNF', 'confirmed',
+                    'RAC', 'reservation against cancellation', 'chart preparation'
+                ],
+                departments: ['Booking Support Team']
+            },
+            {
+                name: 'Tatkal Booking',
+                keywords: [
+                    'tatkal booking', 'tatkal failed', 'premium tatkal', 'tatkal quota',
+                    'tatkal timing', 'tatkal not available', 'tatkal full', 'tatkal error',
+                    'emergency quota', 'VIP quota', 'ladies quota', 'senior citizen quota'
+                ],
+                departments: ['Tatkal Support Team']
+            },
+            {
+                name: 'Ticket Issues',
+                keywords: [
+                    'ticket', 'e-ticket', 'i-ticket', 'counter ticket', 'ticket printing',
+                    'ticket download', 'ticket not generated', 'duplicate ticket',
+                    'ticket cancellation', 'ticket modification', 'date change', 'train change'
+                ],
+                departments: ['Urgent Ticketing Support']
+            },
+            {
+                name: 'Seat/Berth Issues',
+                keywords: [
+                    'seat allocation', 'berth allocation', 'seat preference', 'lower berth',
+                    'upper berth', 'middle berth', 'side berth', 'window seat', 'aisle seat',
+                    'coach allocation', 'compartment', 'bogey', 'AC coach', 'sleeper coach'
+                ],
+                departments: ['Booking Support Team']
+            },
+            {
+                name: 'Class Issues',
+                keywords: [
+                    '1A', '2A', '3A', 'AC first', 'AC two tier', 'AC three tier',
+                    'sleeper', 'SL', 'second sitting', '2S', 'chair car', 'CC',
+                    'executive class', 'premium class', 'economy class'
+                ],
+                departments: ['Booking Support Team']
+            },
+            {
+                name: 'Booking Platforms',
+                keywords: [
+                    'IRCTC', 'mobile app', 'website booking', 'agent booking', 'counter booking',
+                    'online booking', 'offline booking', 'third party booking'
+                ],
+                departments: ['Booking Support Team']
+            }
+        ],
+        priority: 'medium',
+        confidence: 0.85
+    },
+
+    'Catering & Food': {
+        subcategories: [
+            {
+                name: 'Food Quality Issues',
+                keywords: [
+                    'food quality', 'bad food', 'spoiled food', 'rotten food', 'stale food',
+                    'expired food', 'contaminated food', 'food poisoning', 'stomach upset',
+                    'indigestion', 'vomiting', 'diarrhea', 'food allergy', 'food intolerance',
+                    'unhygienic food', 'dirty food', 'hair in food', 'insect in food',
+                    'foreign object', 'plastic in food', 'glass in food', 'stone in food'
+                ],
+                departments: ['Catering Quality Team']
+            },
+            {
+                name: 'Food Service Issues',
+                keywords: [
+                    'no food provided', 'food not served', 'food delayed', 'cold food',
+                    'food not available', 'menu not available', 'food shortage', 'food cancelled',
+                    'food timing', 'meal timing', 'breakfast', 'lunch', 'dinner', 'snacks',
+                    'tea', 'coffee', 'water', 'beverages', 'soft drinks', 'juice'
+                ],
+                departments: ['Premium Catering Team']
+            },
+            {
+                name: 'Pricing Issues',
+                keywords: [
+                    'overpriced food', 'expensive meal', 'food cost', 'meal cost',
+                    'food price', 'overcharged food', 'billing error food', 'food bill',
+                    'menu price', 'food rates', 'catering charges', 'meal charges'
+                ],
+                departments: ['Catering Quality Team']
+            },
+            {
+                name: 'Catering Service',
+                keywords: [
+                    'catering', 'pantry car', 'food trolley', 'meal service', 'food vendor',
+                    'food delivery', 'e-catering', 'online food', 'food booking',
+                    'catering staff', 'food server', 'pantry staff', 'chef', 'cook'
+                ],
+                departments: ['IRCTC E-Catering Team']
+            },
+            {
+                name: 'Dietary Requirements',
+                keywords: [
+                    'vegetarian', 'non-vegetarian', 'vegan', 'jain food', 'halal food',
+                    'kosher food', 'diabetic food', 'low salt', 'low oil', 'sugar free',
+                    'gluten free', 'dairy free', 'special diet', 'medical diet'
+                ],
+                departments: ['Premium Catering Team']
+            },
+            {
+                name: 'Food Types',
+                keywords: [
+                    'meal', 'thali', 'combo', 'biryani', 'curry', 'dal', 'rice',
+                    'roti', 'chapati', 'bread', 'sandwich', 'burger', 'pizza',
+                    'south indian', 'north indian', 'chinese', 'continental'
+                ],
+                departments: ['IRCTC E-Catering Team']
+            },
+            {
+                name: 'Dining Experience',
+                keywords: [
+                    'dining car', 'restaurant car', 'food court', 'hungry', 'appetite',
+                    'taste', 'flavor', 'spicy', 'bland', 'salty', 'sweet', 'bitter'
+                ],
+                departments: ['Premium Catering Team']
+            }
+        ],
+        priority: 'medium',
+        confidence: 0.85
+    },
+
+    'Technical Issues': {
+        subcategories: [
+            {
+                name: 'Website/Portal Issues',
+                keywords: [
+                    'website error', 'website not working', 'website down', 'website slow',
+                    'portal error', 'portal problem', 'portal not loading', 'portal crashed',
+                    'server error', 'server down', 'server timeout', 'server busy',
+                    'HTTP error', '404 error', '500 error', 'gateway timeout', 'NGET error'
+                ],
+                departments: ['Web Portal Backend Support']
+            },
+            {
+                name: 'App Issues',
+                keywords: [
+                    'app crash', 'app error', 'app not working', 'app slow', 'app hanging',
+                    'mobile app', 'android app', 'iOS app', 'app update', 'app version',
+                    'app installation', 'app download', 'app loading', 'app freezing'
+                ],
+                departments: ['IT Support Level 1']
+            },
+            {
+                name: 'Login/Authentication Issues',
+                keywords: [
+                    'login failed', 'login error', 'login problem', 'cannot login',
+                    'username error', 'password error', 'forgot password', 'password reset',
+                    'account locked', 'account blocked', 'session expired', 'logout error',
+                    'OTP not received', 'OTP expired', 'OTP error', 'verification failed',
+                    'captcha error', 'captcha not visible', 'security question'
+                ],
+                departments: ['IT Support Level 1']
+            },
+            {
+                name: 'Payment Gateway Issues',
+                keywords: [
+                    'payment gateway error', 'payment processing error', 'payment timeout',
+                    'payment declined', 'payment failed', 'transaction error', 'transaction timeout',
+                    'payment not processed', 'payment stuck', 'payment pending',
+                    'bank error', 'card error', 'UPI error', 'wallet error'
+                ],
+                departments: ['Payment Gateway Support']
+            },
+            {
+                name: 'Form/Function Issues',
+                keywords: [
+                    'form error', 'form not submitting', 'form validation error',
+                    'file upload error', 'file not uploading', 'attachment error',
+                    'download error', 'print error', 'PDF error', 'ticket download error'
+                ],
+                departments: ['Web Portal Backend Support']
+            },
+            {
+                name: 'Browser/Compatibility Issues',
+                keywords: [
+                    'browser error', 'browser not supported', 'compatibility issue',
+                    'internet explorer', 'chrome error', 'firefox error', 'safari error',
+                    'javascript error', 'CSS error', 'display error', 'layout error'
+                ],
+                departments: ['IT Support Level 1']
+            },
+            {
+                name: 'Network/Connectivity Issues',
+                keywords: [
+                    'internet connection', 'network error', 'connection timeout',
+                    'slow internet', 'connectivity issue', 'bandwidth issue',
+                    'wifi error', 'mobile data', '4G error', '5G error'
+                ],
+                departments: ['IT Support Level 1']
+            },
+            {
+                name: 'System Issues',
+                keywords: [
+                    'system error', 'system down', 'system maintenance', 'system update',
+                    'database error', 'data not found', 'data corruption', 'sync error',
+                    'backup error', 'restore error', 'migration error'
+                ],
+                departments: ['Web Portal Backend Support']
+            }
+        ],
+        priority: 'medium',
+        confidence: 0.8
+    },
+
+    'Staff Behavior': {
+        subcategories: [
+            {
+                name: 'Misconduct',
+                keywords: [
+                    'TTE misbehaved', 'staff rude', 'employee misconduct', 'staff misconduct',
+                    'inappropriate behavior', 'unprofessional behavior', 'rude behavior',
+                    'misbehavior', 'bad behavior', 'unethical behavior', 'corrupt behavior'
+                ],
+                departments: ['HR Disciplinary Team']
+            },
+            {
+                name: 'Staff Roles',
+                keywords: [
+                    'TTE', 'ticket collector', 'train conductor', 'guard', 'driver',
+                    'station master', 'booking clerk', 'reservation clerk', 'enquiry clerk',
+                    'catering staff', 'pantry staff', 'cleaning staff', 'security staff',
+                    'railway employee', 'railway staff', 'railway officer', 'supervisor'
+                ],
+                departments: ['Employee Grievance Cell']
+            },
+            {
+                name: 'Positive Behavior',
+                keywords: [
+                    'helpful staff', 'good service', 'courteous behavior', 'polite staff',
+                    'excellent service', 'staff appreciation', 'thank you', 'grateful',
+                    'kind staff', 'supportive staff', 'cooperative staff', 'friendly staff'
+                ],
+                departments: ['HR Recognition Team']
+            },
+            {
+                name: 'Negative Behavior',
+                keywords: [
+                    'rude staff', 'arrogant staff', 'disrespectful staff', 'abusive staff',
+                    'threatening staff', 'intimidating staff', 'discriminatory behavior',
+                    'biased behavior', 'favoritism', 'bribery', 'corruption'
+                ],
+                departments: ['HR Disciplinary Team']
+            },
+            {
+                name: 'Service Issues',
+                keywords: [
+                    'poor service', 'bad service', 'no service', 'delayed service',
+                    'service denial', 'service refusal', 'service attitude', 'service quality',
+                    'customer service', 'passenger service', 'service delivery'
+                ],
+                departments: ['Employee Grievance Cell']
+            },
+            {
+                name: 'Communication Issues',
+                keywords: [
+                    'language barrier', 'communication problem', 'not listening',
+                    'not responding', 'ignoring', 'dismissive', 'condescending',
+                    'shouting', 'yelling', 'arguing', 'quarreling'
+                ],
+                departments: ['Employee Grievance Cell']
+            },
+            {
+                name: 'Harassment',
+                keywords: [
+                    'harassment', 'verbal abuse', 'physical abuse', 'mental harassment',
+                    'sexual harassment', 'gender harassment', 'racial harassment',
+                    'caste discrimination', 'religious discrimination', 'age discrimination'
+                ],
+                departments: ['HR Disciplinary Team']
+            }
+        ],
+        priority: 'high',
+        confidence: 0.9
+    },
+
+    'Cleanliness & Maintenance': {
+        subcategories: [
+            {
+                name: 'Cleanliness Issues',
+                keywords: [
+                    'dirty coach', 'unclean coach', 'filthy coach', 'messy coach',
+                    'dirty toilet', 'unclean toilet', 'filthy toilet', 'toilet smell',
+                    'washroom dirty', 'bathroom dirty', 'restroom dirty', 'lavatory dirty',
+                    'poor hygiene', 'unhygienic', 'unsanitary', 'contaminated',
+                    'garbage', 'trash', 'litter', 'rubbish', 'waste', 'debris',
+                    'smell', 'odor', 'stench', 'bad smell', 'foul smell'
+                ],
+                departments: ['Coaching Maintenance Team']
+            },
+            {
+                name: 'Cleaning Issues',
+                keywords: [
+                    'not cleaned', 'cleaning delayed', 'cleaning staff', 'housekeeping',
+                    'mopping', 'sweeping', 'dusting', 'sanitization', 'disinfection',
+                    'cleaning supplies', 'detergent', 'soap', 'tissue paper', 'toilet paper'
+                ],
+                departments: ['Coaching Maintenance Team']
+            },
+            {
+                name: 'Maintenance Issues',
+                keywords: [
+                    'maintenance', 'repair', 'broken', 'damaged', 'faulty', 'not working',
+                    'out of order', 'needs repair', 'replacement needed', 'worn out'
+                ],
+                departments: ['Coaching Maintenance Team']
+            },
+            {
+                name: 'Electrical Issues',
+                keywords: [
+                    'AC not working', 'air conditioning', 'cooling', 'heating', 'temperature',
+                    'fan not working', 'ceiling fan', 'exhaust fan', 'ventilation',
+                    'no power', 'power cut', 'electrical issue', 'electrical fault',
+                    'light not working', 'bulb fused', 'tube light', 'LED', 'lighting',
+                    'charging point', 'power socket', 'plug point', 'USB port'
+                ],
+                departments: ['Electrical Team', 'AC Maintenance Team']
+            },
+            {
+                name: 'Water Issues',
+                keywords: [
+                    'water shortage', 'no water', 'water not available', 'water quality',
+                    'dirty water', 'contaminated water', 'water pressure', 'water tap',
+                    'water leakage', 'water dripping', 'water overflow', 'drainage'
+                ],
+                departments: ['Coaching Maintenance Team']
+            },
+            {
+                name: 'Plumbing Issues',
+                keywords: [
+                    'plumbing', 'pipe leakage', 'pipe burst', 'drain blocked',
+                    'toilet flush', 'flush not working', 'water closet', 'commode',
+                    'sink', 'basin', 'tap', 'faucet', 'shower', 'geyser'
+                ],
+                departments: ['Coaching Maintenance Team']
+            },
+            {
+                name: 'Structural Issues',
+                keywords: [
+                    'window broken', 'door broken', 'lock broken', 'handle broken',
+                    'seat broken', 'berth broken', 'table broken', 'mirror broken',
+                    'floor damaged', 'wall damaged', 'ceiling damaged', 'paint peeling',
+                    'rust', 'corrosion', 'wear and tear', 'deterioration'
+                ],
+                departments: ['Coaching Maintenance Team']
+            },
+            {
+                name: 'Pest Control',
+                keywords: [
+                    'insects', 'cockroaches', 'rats', 'mice', 'lizards', 'ants',
+                    'flies', 'mosquitoes', 'bugs', 'pest control', 'fumigation'
+                ],
+                departments: ['Coaching Maintenance Team']
+            }
+        ],
+        priority: 'medium',
+        confidence: 0.8
+    },
+
+    'Train Operations': {
+        subcategories: [
+            {
+                name: 'Delays',
+                keywords: [
+                    'train delay', 'delayed train', 'running late', 'late arrival',
+                    'late departure', 'delay', 'timing', 'schedule', 'punctuality',
+                    'arrival time', 'departure time', 'expected arrival', 'ETA'
+                ],
+                departments: ['Operations Analytics Team']
+            },
+            {
+                name: 'Cancellations',
+                keywords: [
+                    'train cancelled', 'cancellation', 'trip cancelled', 'service cancelled',
+                    'train not running', 'train suspended', 'service suspended',
+                    'route cancelled', 'schedule cancelled', 'booking cancelled'
+                ],
+                departments: ['System Monitoring Team']
+            },
+            {
+                name: 'Diversions',
+                keywords: [
+                    'train diverted', 'route changed', 'diversion', 'alternate route',
+                    'path change', 'track change', 'rescheduled', 'time change'
+                ],
+                departments: ['High Density Route Support']
+            },
+            {
+                name: 'Station Issues',
+                keywords: [
+                    'station', 'platform', 'platform change', 'announcement',
+                    'information board', 'display board', 'LED board', 'PA system',
+                    'station facilities', 'station amenities', 'station services',
+                    'waiting room', 'retiring room', 'cloak room', 'parking'
+                ],
+                departments: ['System Monitoring Team']
+            },
+            {
+                name: 'Train Specifics',
+                keywords: [
+                    'train number', 'train name', 'coach number', 'bogey',
+                    'engine', 'locomotive', 'speed', 'brakes', 'coupling',
+                    'signals', 'track', 'railway line', 'junction', 'station code'
+                ],
+                departments: ['Operations Analytics Team']
+            },
+            {
+                name: 'Operational Issues',
+                keywords: [
+                    'operational', 'traffic', 'congestion', 'crowd', 'overcrowding',
+                    'capacity', 'load', 'passenger load', 'standing passengers',
+                    'reservation chart', 'passenger list', 'occupancy'
+                ],
+                departments: ['High Density Route Support']
+            },
+            {
+                name: 'Service Frequency',
+                keywords: [
+                    'frequency', 'schedule', 'timetable', 'running days',
+                    'weekly service', 'daily service', 'special train', 'express train',
+                    'passenger train', 'mail train', 'superfast train'
+                ],
+                departments: ['Operations Analytics Team']
+            },
+            {
+                name: 'Route Information',
+                keywords: [
+                    'route', 'stops', 'halts', 'intermediate stations', 'terminus',
+                    'origin', 'destination', 'via', 'distance', 'journey time'
+                ],
+                departments: ['System Monitoring Team']
+            }
+        ],
+        priority: 'medium',
+        confidence: 0.8
+    },
+
+    'Accessibility': {
+        subcategories: [
+            {
+                name: 'Disability Services',
+                keywords: [
+                    'wheelchair access', 'wheelchair', 'disabled facilities', 'handicapped',
+                    'differently abled', 'disability', 'physical disability', 'mobility',
+                    'accessibility', 'accessible', 'barrier free', 'ramp', 'lift', 'elevator',
+                    'special needs', 'assistance', 'help', 'support', 'aid'
+                ],
+                departments: ['Accessibility Support Team']
+            },
+            {
+                name: 'Visual Impairment',
+                keywords: [
+                    'blind', 'visually impaired', 'vision', 'braille', 'guide dog',
+                    'screen reader', 'audio', 'voice', 'speech', 'sound',
+                    'low vision', 'partially sighted', 'eye sight'
+                ],
+                departments: ['Accessibility Digital Team']
+            },
+            {
+                name: 'Hearing Impairment',
+                keywords: [
+                    'deaf', 'hearing impaired', 'hearing aid', 'sign language',
+                    'deaf mute', 'hard of hearing', 'hearing loss'
+                ],
+                departments: ['Accessibility Support Team']
+            },
+            {
+                name: 'Mobility Issues',
+                keywords: [
+                    'walking difficulty', 'crutches', 'walking stick', 'walker',
+                    'mobility aid', 'prosthetic', 'artificial limb', 'amputee',
+                    'paralysis', 'paralyzed', 'wheelchair bound', 'bedridden'
+                ],
+                departments: ['Accessibility Support Team']
+            },
+            {
+                name: 'Elderly/Senior Citizens',
+                keywords: [
+                    'senior citizen', 'elderly', 'old age', 'senior', 'aged',
+                    'geriatric', 'pension', 'retirement', 'old person'
+                ],
+                departments: ['Senior Citizen Support Team']
+            },
+            {
+                name: 'Pregnant Women',
+                keywords: [
+                    'pregnant', 'pregnancy', 'expecting', 'maternity', 'prenatal',
+                    'expecting mother', 'pregnant lady', 'ladies coach'
+                ],
+                departments: ['Accessibility Support Team']
+            },
+            {
+                name: 'Children',
+                keywords: [
+                    'child', 'minor', 'infant', 'baby', 'toddler', 'kid',
+                    'unaccompanied minor', 'child care', 'pediatric', 'family'
+                ],
+                departments: ['Accessibility Support Team']
+            },
+            {
+                name: 'Medical Conditions',
+                keywords: [
+                    'medical condition', 'health issue', 'chronic illness', 'patient',
+                    'medical equipment', 'oxygen', 'dialysis', 'insulin', 'medication',
+                    'heart condition', 'diabetes', 'blood pressure', 'asthma'
+                ],
+                departments: ['Accessibility Support Team']
+            },
+            {
+                name: 'Accessibility Features',
+                keywords: [
+                    'accessible toilet', 'accessible coach', 'priority seating',
+                    'reserved seating', 'special accommodation', 'extra space',
+                    'attendant', 'caregiver', 'companion', 'escort'
+                ],
+                departments: ['Accessibility Support Team']
+            }
+        ],
+        priority: 'high',
+        confidence: 0.9
+    },
+
+    'Station Amenities': {
+        subcategories: [
+            {
+                name: 'Basic Amenities',
+                keywords: [
+                    'station amenities', 'station facilities', 'station services',
+                    'amenities', 'facilities', 'services', 'infrastructure',
+                    'waiting room', 'waiting hall', 'seating', 'benches', 'chairs',
+                    'retiring room', 'rest room', 'dormitory', 'lodge', 'accommodation',
+                    'cloak room', 'luggage room', 'baggage', 'storage', 'locker'
+                ],
+                departments: ['NR Station Management', 'SR Station Management']
+            },
+            {
+                name: 'Food and Beverage',
+                keywords: [
+                    'food stall', 'food court', 'restaurant', 'canteen', 'cafeteria',
+                    'tea stall', 'coffee shop', 'snack bar', 'vendor', 'hawker',
+                    'water', 'drinking water', 'water cooler', 'RO water', 'mineral water',
+                    'water fountain', 'tap water', 'water bottle', 'hydration'
+                ],
+                departments: ['Commercial Station Section']
+            },
+            {
+                name: 'Commercial Services',
+                keywords: [
+                    'book stall', 'magazine', 'newspaper', 'stationery', 'gift shop',
+                    'pharmacy', 'medical store', 'ATM', 'bank', 'money exchange',
+                    'internet cafe', 'STD booth', 'phone booth', 'charging station'
+                ],
+                departments: ['Commercial Station Section']
+            },
+            {
+                name: 'Transportation',
+                keywords: [
+                    'taxi', 'auto rickshaw', 'bus', 'metro', 'local train',
+                    'parking', 'vehicle parking', 'two wheeler parking', 'car parking',
+                    'prepaid taxi', 'cab', 'uber', 'ola', 'transport'
+                ],
+                departments: ['NR Station Management', 'SR Station Management']
+            },
+            {
+                name: 'Information Services',
+                keywords: [
+                    'inquiry counter', 'information desk', 'help desk', 'assistance',
+                    'station map', 'direction', 'signage', 'board', 'display',
+                    'announcement', 'PA system', 'speaker', 'audio', 'information'
+                ],
+                departments: ['NR Station Management', 'SR Station Management']
+            },
+            {
+                name: 'Cleanliness',
+                keywords: [
+                    'cleaning', 'housekeeping', 'sanitation', 'dustbin', 'garbage bin',
+                    'waste disposal', 'toilet', 'washroom', 'bathroom', 'restroom',
+                    'hygiene', 'cleanliness', 'maintenance', 'upkeep'
+                ],
+                departments: ['NR Station Management', 'SR Station Management']
+            },
+            {
+                name: 'Safety and Security',
+                keywords: [
+                    'security', 'police', 'RPF', 'CISF', 'guard', 'watchman',
+                    'CCTV', 'surveillance', 'safety', 'emergency', 'first aid',
+                    'medical room', 'dispensary', 'ambulance', 'stretcher'
+                ],
+                departments: ['NR Station Management', 'SR Station Management']
+            },
+            {
+                name: 'Accessibility',
+                keywords: [
+                    'escalator', 'lift', 'elevator', 'ramp', 'wheelchair access',
+                    'disabled facilities', 'accessibility', 'barrier free'
+                ],
+                departments: ['NR Station Management', 'SR Station Management']
+            },
+            {
+                name: 'Lighting and Ventilation',
+                keywords: [
+                    'lighting', 'light', 'bulb', 'tube light', 'LED', 'illumination',
+                    'fan', 'ventilation', 'air circulation', 'AC', 'air conditioning'
+                ],
+                departments: ['NR Station Management', 'SR Station Management']
+            }
+        ],
+        priority: 'medium',
+        confidence: 0.8
+    },
+
+    'Premium Services': {
+        subcategories: [
+            {
+                name: 'Premium Trains',
+                keywords: [
+                    'Rajdhani', 'Shatabdi', 'Vande Bharat', 'Tejas', 'Gatimaan',
+                    'Duronto', 'premium train', 'superfast', 'express', 'luxury train',
+                    'premium service', 'executive class', 'first class', 'business class'
+                ],
+                departments: ['Premium User Support']
+            },
+            {
+                name: 'Premium Classes',
+                keywords: [
+                    '1A', 'AC first class', 'first AC', 'executive chair car',
+                    'premium coach', 'luxury coach', 'VIP coach', 'special coach'
+                ],
+                departments: ['Premium User Support']
+            },
+            {
+                name: 'Premium Amenities',
+                keywords: [
+                    'premium amenities', 'luxury amenities', 'executive lounge',
+                    'premium catering', 'gourmet food', 'fine dining', 'chef special',
+                    'welcome drink', 'complimentary', 'free service', 'inclusive',
+                    'bed roll', 'pillow', 'blanket', 'towel', 'toiletries',
+                    'newspaper', 'magazine', 'entertainment', 'wifi', 'internet',
+                    'charging point', 'power outlet', 'USB port', 'laptop charging'
+                ],
+                departments: ['Premium Catering Team', 'Premium Maintenance Team']
+            },
+            {
+                name: 'Premium Services',
+                keywords: [
+                    'concierge', 'attendant', 'steward', 'cabin crew', 'hostess',
+                    'personalized service', 'dedicated service', 'exclusive service',
+                    'priority boarding', 'fast track', 'express check-in',
+                    'premium booking', 'VIP booking', 'executive booking'
+                ],
+                departments: ['Premium User Support']
+            },
+            {
+                name: 'Premium Pricing',
+                keywords: [
+                    'premium fare', 'executive fare', 'luxury fare', 'dynamic fare',
+                    'flexi fare', 'premium pricing', 'value added service',
+                    'premium charges', 'surcharge', 'additional cost'
+                ],
+                departments: ['Premium User Support']
+            }
+        ],
+        priority: 'high',
+        confidence: 0.9
+    },
+
+    'Social Media & PR': {
+        subcategories: [
+            {
+                name: 'Social Media Platforms',
+                keywords: [
+                    'twitter', 'facebook', 'instagram', 'youtube', 'linkedin',
+                    'social media', 'post', 'tweet', 'share', 'like', 'comment',
+                    'viral', 'trending', 'hashtag', 'mention', 'tag', 'handle'
+                ],
+                departments: ['Social Media Crisis Team']
+            },
+            {
+                name: 'Public Relations',
+                keywords: [
+                    'media', 'press', 'news', 'newspaper', 'TV', 'radio',
+                    'journalist', 'reporter', 'coverage', 'story', 'article',
+                    'interview', 'statement', 'press release', 'announcement'
+                ],
+                departments: ['Public Relations Crisis Team']
+            },
+            {
+                name: 'Reputation Management',
+                keywords: [
+                    'reputation', 'image', 'brand', 'public opinion', 'perception',
+                    'negative publicity', 'bad press', 'controversy', 'scandal',
+                    'crisis', 'damage control', 'public relations', 'PR'
+                ],
+                departments: ['Public Relations Crisis Team']
+            },
+            {
+                name: 'Engagement',
+                keywords: [
+                    'engagement', 'interaction', 'response', 'reply', 'feedback',
+                    'review', 'rating', 'testimonial', 'recommendation',
+                    'influencer', 'blogger', 'vlogger', 'content creator'
+                ],
+                departments: ['Content Moderation Team']
+            },
+            {
+                name: 'Complaints Going Viral',
+                keywords: [
+                    'viral complaint', 'public complaint', 'widespread issue',
+                    'mass complaint', 'trending complaint', 'public outcry',
+                    'customer outrage', 'social media storm', 'twitter storm'
+                ],
+                departments: ['Social Media Crisis Team']
+            }
+        ],
+        priority: 'urgent',
+        confidence: 0.85
+    }
+};

@@ -4,7 +4,9 @@ import {
     Send, Phone, MessageCircle, ArrowLeft, Home, Plus, Eye, 
     Train, ChevronDown, Activity, Star, Bell, Settings,
     Calendar, User, Filter, Download, Share2, ExternalLink,
-    Zap, Shield, Globe, TrendingUp, Award, Heart, Mail
+    Zap, Shield, Globe, TrendingUp, Award, Heart, Mail, 
+     
+     
 } from 'lucide-react';
 import { 
     CATEGORY_KEYWORDS, 
@@ -12,6 +14,10 @@ import {
     PRIORITY_WEIGHTS, 
     DEFAULT_ASSIGNMENTS 
 } from './constants';
+import GuidelinesPage from './GuidelinesPage';
+
+
+// At the top of App.js, add this import
 
 // --- Enhanced Clean UI Components ---
 // Smart Category Suggestion System - Based on Railway Complaint Rules
@@ -1754,6 +1760,8 @@ const FaqPage = () => {
 };
 
 // --- Main App Component ---
+// Add this before the App component
+
 
 const App = () => {
   const [currentPath, setCurrentPath] = useState(window.location.pathname);
@@ -2039,54 +2047,60 @@ const generateComplaintStatus = (category, priority, timeElapsed) => {
     };
     
     const renderPage = () => {
-        if (currentPath.startsWith('/dashboard/')) {
-            const id = currentPath.split('/dashboard/')[1];
-            const complaint = complaints[id];
-            return complaint ? (
-                <ComplaintDetailsPage complaint={complaint} onBack={() => navigate('/dashboard')} />
-            ) : (
+    if (currentPath.startsWith('/dashboard/')) {
+        const id = currentPath.split('/dashboard/')[1];
+        const complaint = complaints[id];
+        return complaint ? (
+            <ComplaintDetailsPage complaint={complaint} onBack={() => navigate('/dashboard')} />
+        ) : (
+            <div className="text-center py-20">
+                <h2 className="text-2xl font-bold text-gray-800 mb-4">404 - Complaint Not Found</h2>
+                <p className="text-gray-600 mb-6">The complaint you're looking for doesn't exist or may have been removed.</p>
+                <button 
+                    onClick={() => navigate('/dashboard')} 
+                    className="px-6 py-3 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700 transition-colors"
+                >
+                    Go to Dashboard
+                </button>
+            </div>
+        );
+    }
+
+    switch (currentPath) {
+        case '/':
+        case '/home':
+            return <HomePage navigate={navigate} />;
+        case '/guidelines':
+            return <GuidelinesPage onBack={() => navigate('/')} />;
+        case '/submit':
+            return <ComplaintFormPage onComplaintSubmit={handleComplaintSubmit} />;
+        case '/lookup':
+            return <ComplaintLookupPage onLookup={handleComplaintLookup} />;
+        case '/track':
+            return <TrackComplaintPage onTrack={handleTrackComplaint} />;
+        case '/dashboard':
+            return <DashboardPage 
+                complaints={Object.values(complaints)} 
+                onSelectComplaint={(id) => navigate(`/dashboard/${id}`)} 
+                navigate={navigate} 
+            />;
+        case '/faq':
+            return <FaqPage />;
+        default:
+            return (
                 <div className="text-center py-20">
-                    <h2 className="text-2xl font-bold text-gray-800 mb-4">404 - Complaint Not Found</h2>
-                    <p className="text-gray-600 mb-6">The complaint you're looking for doesn't exist or may have been removed.</p>
+                    <h2 className="text-2xl font-bold text-gray-800 mb-4">404 - Page Not Found</h2>
+                    <p className="text-gray-600 mb-6">The page you're looking for doesn't exist.</p>
                     <button 
-                        onClick={() => navigate('/dashboard')} 
+                        onClick={() => navigate('/')} 
                         className="px-6 py-3 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700 transition-colors"
                     >
-                        Go to Dashboard
+                        Go to Home
                     </button>
                 </div>
             );
-        }
-
-        switch (currentPath) {
-            case '/':
-            case '/home':
-                return <HomePage navigate={navigate} />;
-            case '/submit':
-                return <ComplaintFormPage onComplaintSubmit={handleComplaintSubmit} />;
-            case '/track':
-                return <TrackComplaintPage onTrack={handleTrackComplaint} />;
-            case '/lookup':
-                return <ComplaintLookupPage onLookup={handleComplaintLookup} />;
-            case '/dashboard':
-                return <DashboardPage complaints={Object.values(complaints)} onSelectComplaint={handleTrackComplaint} navigate={navigate} isVertical={true} />;
-            case '/faq':
-                return <FaqPage />;
-            default:
-                return (
-                    <div className="text-center py-20">
-                        <h2 className="text-2xl font-bold text-gray-800 mb-4">404 - Page Not Found</h2>
-                        <p className="text-gray-600 mb-6">The page you're looking for doesn't exist.</p>
-                        <button 
-                            onClick={() => navigate('/')} 
-                            className="px-6 py-3 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700 transition-colors"
-                        >
-                            Go to Home
-                        </button>
-                    </div>
-                );
-        }
-    };
+    }
+};
 
     return (
         <div className="bg-gray-50 text-gray-800 min-h-screen">

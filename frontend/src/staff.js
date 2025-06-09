@@ -516,7 +516,7 @@ const StaffLoginPage = ({ onBack, complaints, navigate }) => {
 
                             <button
                                 type="submit"
-                                className="w-full bg-orange-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-orange-700 transition-colors flex items-center justify-center gap-2 touch-manipulation"
+                                className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-orange-700 transition-colors flex items-center justify-center gap-2 touch-manipulation"
                                 style={{ minHeight: '48px' }}
                             >
                                 <Shield className="h-5 w-5" />

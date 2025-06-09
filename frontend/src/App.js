@@ -4,7 +4,7 @@ import {
     Send, Phone, MessageCircle, ArrowLeft, Home, Plus, Eye, 
     Train, ChevronDown, Activity, Star, Bell, Settings,
     Calendar, User, Filter, Download, Share2, ExternalLink,
-    Zap, Shield, Globe, TrendingUp, Award, Heart, Mail,MessageSquare, BookOpen  
+    Zap, Shield, Globe, TrendingUp, Award, Heart, Mail,MessageSquare, BookOpen , X 
      
      
 } from 'lucide-react';
@@ -478,11 +478,12 @@ const Modal = ({ type, title, message, onClose, isVisible }) => {
 const Header = ({ navigate, currentPath }) => {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [notifications, setNotifications] = useState([
-        { id: 1, message: "Your complaint CMP2025060701 has been updated", time: "2 min ago", unread: true },
+        { id: 1, message: "Your complaint CMP2025060701 has been updated", time: "2 min ago", unread: false },
         { id: 2, message: "New FAQ section added", time: "1 hour ago", unread: false }
     ]);
     const [showNotifications, setShowNotifications] = useState(false);
     const [showUserMenu, setShowUserMenu] = useState(false);
+    const [searchTerm, setSearchTerm] = useState('');
 
     const unreadCount = notifications.filter(n => n.unread).length;
 
@@ -497,40 +498,84 @@ const Header = ({ navigate, currentPath }) => {
         return currentPath === path;
     };
 
+    // Mobile-optimized touch handlers
+    const handleMobileMenuToggle = () => {
+        setIsMobileMenuOpen(!isMobileMenuOpen);
+        // Prevent body scroll when mobile menu is open
+        if (!isMobileMenuOpen) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = 'unset';
+        }
+    };
+
+    const handleMobileNavigation = (path) => {
+        navigate(path);
+        setIsMobileMenuOpen(false);
+        document.body.style.overflow = 'unset';
+    };
+
+    // Close dropdowns when clicking outside (mobile optimization)
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (showNotifications || showUserMenu) {
+                const isClickInsideDropdown = event.target.closest('.dropdown-container');
+                if (!isClickInsideDropdown) {
+                    setShowNotifications(false);
+                    setShowUserMenu(false);
+                }
+            }
+        };
+
+        document.addEventListener('touchstart', handleClickOutside);
+        document.addEventListener('click', handleClickOutside);
+        
+        return () => {
+            document.removeEventListener('touchstart', handleClickOutside);
+            document.removeEventListener('click', handleClickOutside);
+        };
+    }, [showNotifications, showUserMenu]);
+
+    // Cleanup on unmount
+    useEffect(() => {
+        return () => {
+            document.body.style.overflow = 'unset';
+        };
+    }, []);
+
     return (
         <header className="bg-white shadow-lg sticky top-0 z-50 border-b border-gray-200">
-            <nav className="container mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="flex justify-between items-center h-16">
-                    {/* Logo and Brand */}
-                    {/* Updated Logo and Brand - Removed border and green dot */}
-<div 
-    className="flex items-center space-x-3 cursor-pointer group" 
-    onClick={() => navigate('/')}
->
-    <div className="relative">
-        <img 
-            src={logo}
-            alt="RailCare Logo" 
-            className="h-10 w-10 object-contain group-hover:scale-105 transition-all duration-300"
-        />
-        {/* Green dot removed */}
-    </div>
-    <div className="hidden sm:block">
-        <h1 className="text-xl font-bold text-gray-800 group-hover:text-indigo-600 transition-colors">
-            RailCare
-        </h1>
-        <p className="text-xs text-gray-500 font-medium">Smart Complaint Resolution Platform </p>
-    </div>
-</div>
+            <nav className="container mx-auto px-3 sm:px-4 lg:px-6 xl:px-8">
+                <div className="flex justify-between items-center h-14 sm:h-16">
+                    {/* Logo and Brand - Mobile Optimized */}
+                    <div 
+                        className="flex items-center space-x-2 sm:space-x-3 cursor-pointer group min-w-0 flex-shrink-0" 
+                        onClick={() => handleMobileNavigation('/')}
+                    >
+                        <div className="relative">
+                            <img 
+                                src={logo}
+                                alt="RailCare Logo" 
+                                className="h-8 w-8 sm:h-10 sm:w-10 object-contain group-hover:scale-105 transition-all duration-300"
+                            />
+                        </div>
+                        <div className="hidden xs:block min-w-0">
+                            <h1 className="text-lg sm:text-xl font-bold text-gray-800 group-hover:text-indigo-600 transition-colors truncate">
+                                RailCare
+                            </h1>
+                            <p className="text-xs text-gray-500 font-medium hidden sm:block truncate">
+                                Smart Complaint Resolution Platform
+                            </p>
+                        </div>
+                    </div>
 
-
-                    {/* Desktop Navigation - Simplified */}
+                    {/* Desktop Navigation - Hidden on Mobile */}
                     <div className="hidden lg:flex items-center space-x-1">
                         {navItems.map(({ path, label, icon: Icon }) => (
                             <button
                                 key={path}
                                 onClick={() => navigate(path)}
-                                className={`flex items-center space-x-2 px-4 py-2 rounded-lg font-medium transition-all duration-300 ${
+                                className={`flex items-center space-x-2 px-3 xl:px-4 py-2 rounded-lg font-medium transition-all duration-300 ${
                                     isActivePath(path)
                                         ? 'bg-indigo-100 text-indigo-700 shadow-sm'
                                         : 'text-gray-600 hover:text-indigo-600 hover:bg-gray-50'
@@ -542,155 +587,232 @@ const Header = ({ navigate, currentPath }) => {
                         ))}
                     </div>
 
-                    {/* Right Side Actions */}
-                    <div className="flex items-center space-x-3">
-                        {/* Search Bar */}
-                        <div className="hidden md:flex items-center bg-gray-100 rounded-lg px-3 py-2 w-64">
-                            <Search className="h-4 w-4 text-gray-400 mr-2" />
+                    {/* Right Side Actions - Mobile Optimized */}
+                    <div className="flex items-center space-x-1 sm:space-x-2 lg:space-x-3">
+                        {/* Search Bar - Hidden on Mobile, Compact on Tablet */}
+                        <div className="hidden md:flex items-center bg-gray-100 rounded-lg px-3 py-2 w-48 lg:w-64">
+                            <Search className="h-4 w-4 text-gray-400 mr-2 flex-shrink-0" />
                             <input
                                 type="text"
                                 placeholder="Search complaints..."
-                                className="bg-transparent border-0 focus:ring-0 text-sm flex-1 text-gray-700 placeholder-gray-500"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="bg-transparent border-0 focus:ring-0 text-sm flex-1 text-gray-700 placeholder-gray-500 min-w-0"
                             />
                         </div>
 
-                        {/* Staff Login Button */}
-                        {/* Updated Staff/User Login Button */}
-{/* Updated Staff/User Login Button */}
-<button
-    onClick={() => navigate(currentPath === '/staff-login' ? '/' : '/staff-login')}
-    className="hidden md:flex items-center space-x-2 px-4 py-2 bg-orange-100 text-orange-700 hover:bg-orange-200 rounded-lg font-medium transition-all duration-300 border border-orange-200"
->
-    {currentPath === '/staff-login' ? (
-        <User className="h-4 w-4" />
-    ) : (
-        <Shield className="h-4 w-4" />
-    )}
-    <span className="text-sm">
-        {currentPath === '/staff-login' ? 'User Login' : 'Staff Login'}
-    </span>
-</button>
+                        {/* Mobile Search Button */}
+                        <button
+                            className="md:hidden p-2 text-gray-600 hover:text-indigo-600 hover:bg-gray-50 rounded-lg transition-all duration-300 touch-manipulation"
+                            style={{ minHeight: '44px', minWidth: '44px' }}
+                            onClick={() => {
+                                // Toggle mobile search functionality
+                                const searchInput = document.createElement('input');
+                                searchInput.placeholder = 'Search complaints...';
+                                searchInput.className = 'w-full p-2 border rounded';
+                                // Mobile search implementation would go here
+                            }}
+                        >
+                            <Search className="h-5 w-5" />
+                        </button>
 
+                        {/* Staff Login Button - Responsive */}
+                        <button
+                            onClick={() => navigate(currentPath === '/staff-login' ? '/' : '/staff-login')}
+                            className="hidden sm:flex items-center space-x-1 lg:space-x-2 px-2 lg:px-4 py-2 bg-orange-100 text-orange-700 hover:bg-orange-200 rounded-lg font-medium transition-all duration-300 border border-orange-200 touch-manipulation"
+                            style={{ minHeight: '44px' }}
+                        >
+                            {currentPath === '/staff-login' ? (
+                                <User className="h-4 w-4" />
+                            ) : (
+                                <Shield className="h-4 w-4" />
+                            )}
+                            <span className="text-xs lg:text-sm hidden lg:inline">
+                                {currentPath === '/staff-login' ? 'User Login' : 'Staff Login'}
+                            </span>
+                        </button>
 
-
-
-                        {/* Notifications */}
-                        <div className="relative">
+                        {/* Notifications - Mobile Optimized */}
+                        <div className="relative dropdown-container">
                             <button
-                                onClick={() => setShowNotifications(!showNotifications)}
-                                className="relative p-2 text-gray-600 hover:text-indigo-600 hover:bg-gray-50 rounded-lg transition-all duration-300"
+                                onClick={() => {
+                                    setShowNotifications(!showNotifications);
+                                    setShowUserMenu(false);
+                                }}
+                                className="relative p-2 text-gray-600 hover:text-indigo-600 hover:bg-gray-50 rounded-lg transition-all duration-300 touch-manipulation"
+                                style={{ minHeight: '44px', minWidth: '44px' }}
+                                aria-label="Notifications"
+                                aria-expanded={showNotifications}
                             >
                                 <Bell className="h-5 w-5" />
-                                {/* {unreadCount > 0 && (
+                                {unreadCount > 0 && (
                                     <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold animate-pulse">
                                         {unreadCount}
                                     </span>
-                                )} */}
+                                )}
                             </button>
 
-                            {/* Notifications Dropdown */}
+                            {/* Mobile-Optimized Notifications Dropdown */}
                             {showNotifications && (
-                                <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-2xl border border-gray-200 z-50">
-                                    <div className="p-4 border-b border-gray-100">
-                                        <h3 className="font-bold text-gray-800 flex items-center justify-between">
-                                            Notifications
-                                            <span className="text-xs bg-indigo-100 text-indigo-700 px-2 py-1 rounded-full">
-                                                {unreadCount} new
-                                            </span>
-                                        </h3>
-                                    </div>
-                                    <div className="max-h-64 overflow-y-auto">
-                                        {notifications.map(notification => (
-                                            <div
-                                                key={notification.id}
-                                                className={`p-3 border-b border-gray-50 hover:bg-gray-50 transition-colors ${
-                                                    notification.unread ? 'bg-blue-50' : ''
-                                                }`}
-                                            >
-                                                <p className="text-sm text-gray-800 font-medium">
-                                                    {notification.message}
-                                                </p>
-                                                <p className="text-xs text-gray-500 mt-1">{notification.time}</p>
+                                <>
+                                    {/* Mobile Backdrop */}
+                                    <div className="fixed inset-0 bg-black bg-opacity-25 z-40 lg:hidden" />
+                                    
+                                    <div className="absolute right-0 mt-2 w-80 max-w-[calc(100vw-2rem)] bg-white rounded-xl shadow-2xl border border-gray-200 z-50 max-h-[70vh] overflow-hidden">
+                                        <div className="p-4 border-b border-gray-100 sticky top-0 bg-white">
+                                            <div className="flex items-center justify-between">
+                                                <h3 className="font-bold text-gray-800">
+                                                    Notifications
+                                                </h3>
+                                                <button
+                                                    onClick={() => setShowNotifications(false)}
+                                                    className="lg:hidden p-1 hover:bg-gray-100 rounded"
+                                                    style={{ minHeight: '32px', minWidth: '32px' }}
+                                                >
+                                                    <X className="h-4 w-4" />
+                                                </button>
                                             </div>
-                                        ))}
+                                            {unreadCount > 0 && (
+                                                <span className="text-xs bg-indigo-100 text-indigo-700 px-2 py-1 rounded-full mt-2 inline-block">
+                                                    {unreadCount} new
+                                                </span>
+                                            )}
+                                        </div>
+                                        <div className="max-h-64 overflow-y-auto overscroll-contain">
+                                            {notifications.map(notification => (
+                                                <div
+                                                    key={notification.id}
+                                                    className={`p-4 border-b border-gray-50 hover:bg-gray-50 transition-colors touch-manipulation ${
+                                                        notification.unread ? 'bg-blue-50' : ''
+                                                    }`}
+                                                    style={{ minHeight: '60px' }}
+                                                >
+                                                    <p className="text-sm text-gray-800 font-medium leading-relaxed">
+                                                        {notification.message}
+                                                    </p>
+                                                    <p className="text-xs text-gray-500 mt-2">{notification.time}</p>
+                                                </div>
+                                            ))}
+                                        </div>
+                                        <div className="p-3 border-t border-gray-100 sticky bottom-0 bg-white">
+                                            <button 
+                                                className="text-sm text-indigo-600 hover:text-indigo-800 font-medium w-full text-center py-2 hover:bg-indigo-50 rounded transition-colors touch-manipulation"
+                                                style={{ minHeight: '40px' }}
+                                            >
+                                                View all notifications
+                                            </button>
+                                        </div>
                                     </div>
-                                    <div className="p-3 border-t border-gray-100">
-                                        <button className="text-sm text-indigo-600 hover:text-indigo-800 font-medium">
-                                            View all notifications
-                                        </button>
-                                    </div>
-                                </div>
+                                </>
                             )}
                         </div>
 
-                        {/* User Menu */}
-                        <div className="relative">
+                        {/* User Menu - Mobile Optimized */}
+                        <div className="relative dropdown-container">
                             <button
-                                onClick={() => setShowUserMenu(!showUserMenu)}
-                                className="flex items-center space-x-2 p-2 text-gray-600 hover:text-indigo-600 hover:bg-gray-50 rounded-lg transition-all duration-300"
+                                onClick={() => {
+                                    setShowUserMenu(!showUserMenu);
+                                    setShowNotifications(false);
+                                }}
+                                className="flex items-center space-x-1 sm:space-x-2 p-2 text-gray-600 hover:text-indigo-600 hover:bg-gray-50 rounded-lg transition-all duration-300 touch-manipulation"
+                                style={{ minHeight: '44px' }}
+                                aria-label="User menu"
+                                aria-expanded={showUserMenu}
                             >
-                                <div className="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center">
-                                    <User className="h-4 w-4 text-indigo-600" />
+                                <div className="w-6 h-6 sm:w-8 sm:h-8 bg-indigo-100 rounded-full flex items-center justify-center">
+                                    <User className="h-3 w-3 sm:h-4 sm:w-4 text-indigo-600" />
                                 </div>
-                                <ChevronDown className="h-4 w-4 hidden sm:block" />
+                                <ChevronDown className="h-3 w-3 sm:h-4 sm:w-4 hidden sm:block" />
                             </button>
 
-                            {/* User Dropdown */}
+                            {/* Mobile-Optimized User Dropdown */}
                             {showUserMenu && (
-                                <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-2xl border border-gray-200 z-50">
-                                    <div className="p-3 border-b border-gray-100">
-                                        <p className="font-medium text-gray-800">Guest User</p>
-                                        <p className="text-xs text-gray-500">user@example.com</p>
+                                <>
+                                    {/* Mobile Backdrop */}
+                                    <div className="fixed inset-0 bg-black bg-opacity-25 z-40 lg:hidden" />
+                                    
+                                    <div className="absolute right-0 mt-2 w-56 max-w-[calc(100vw-2rem)] bg-white rounded-xl shadow-2xl border border-gray-200 z-50">
+                                        <div className="p-3 border-b border-gray-100">
+                                            <div className="flex items-center justify-between">
+                                                <div>
+                                                    <p className="font-medium text-gray-800 text-sm">Guest User</p>
+                                                    <p className="text-xs text-gray-500 truncate">user@example.com</p>
+                                                </div>
+                                                <button
+                                                    onClick={() => setShowUserMenu(false)}
+                                                    className="lg:hidden p-1 hover:bg-gray-100 rounded"
+                                                    style={{ minHeight: '32px', minWidth: '32px' }}
+                                                >
+                                                    <X className="h-4 w-4" />
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div className="py-2">
+                                            <button 
+                                                className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-2 touch-manipulation"
+                                                style={{ minHeight: '44px' }}
+                                            >
+                                                <Settings className="h-4 w-4" />
+                                                <span>Settings</span>
+                                            </button>
+                                            <button 
+                                                className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-2 touch-manipulation"
+                                                style={{ minHeight: '44px' }}
+                                            >
+                                                <ExternalLink className="h-4 w-4" />
+                                                <span>Help & Support</span>
+                                            </button>
+                                        </div>
                                     </div>
-                                    <div className="py-2">
-                                        <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-2">
-                                            <Settings className="h-4 w-4" />
-                                            <span>Settings</span>
-                                        </button>
-                                        <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-2">
-                                            <ExternalLink className="h-4 w-4" />
-                                            <span>Help & Support</span>
-                                        </button>
-                                    </div>
-                                </div>
+                                </>
                             )}
                         </div>
 
-                        {/* Mobile Menu Button */}
+                        {/* Mobile Menu Button - Enhanced */}
                         <button
-                            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                            className="lg:hidden p-2 text-gray-600 hover:text-indigo-600 hover:bg-gray-50 rounded-lg transition-all duration-300"
+                            onClick={handleMobileMenuToggle}
+                            className="lg:hidden p-2 text-gray-600 hover:text-indigo-600 hover:bg-gray-50 rounded-lg transition-all duration-300 touch-manipulation"
+                            style={{ minHeight: '44px', minWidth: '44px' }}
+                            aria-label="Toggle mobile menu"
+                            aria-expanded={isMobileMenuOpen}
                         >
-                            {isMobileMenuOpen ? (
-                                <div className="h-5 w-5 relative">
-                                    <div className="absolute inset-0 flex items-center justify-center">
-                                        <div className="w-4 h-0.5 bg-current transform rotate-45"></div>
-                                        <div className="w-4 h-0.5 bg-current transform -rotate-45"></div>
-                                    </div>
-                                </div>
-                            ) : (
-                                <div className="h-5 w-5 flex flex-col justify-center space-y-1">
-                                    <div className="w-5 h-0.5 bg-current"></div>
-                                    <div className="w-5 h-0.5 bg-current"></div>
-                                    <div className="w-5 h-0.5 bg-current"></div>
-                                </div>
-                            )}
+                            <div className="relative w-5 h-5">
+                                <span 
+                                    className={`absolute block h-0.5 w-5 bg-current transform transition duration-300 ease-in-out ${
+                                        isMobileMenuOpen ? 'rotate-45 translate-y-1.5' : '-translate-y-1'
+                                    }`}
+                                />
+                                <span 
+                                    className={`absolute block h-0.5 w-5 bg-current transform transition duration-300 ease-in-out ${
+                                        isMobileMenuOpen ? 'opacity-0' : 'translate-y-0.5'
+                                    }`}
+                                />
+                                <span 
+                                    className={`absolute block h-0.5 w-5 bg-current transform transition duration-300 ease-in-out ${
+                                        isMobileMenuOpen ? '-rotate-45 -translate-y-1.5' : 'translate-y-2'
+                                    }`}
+                                />
+                            </div>
                         </button>
                     </div>
                 </div>
 
-                {/* Mobile Navigation Menu */}
-                {isMobileMenuOpen && (
-                    <div className="lg:hidden border-t border-gray-200 bg-white">
-                        <div className="py-4 space-y-2">
+                {/* Mobile Navigation Menu - Completely Redesigned */}
+                <div className={`lg:hidden fixed inset-x-0 top-14 sm:top-16 bg-white border-t border-gray-200 shadow-lg z-40 transform transition-all duration-300 ease-in-out ${
+                    isMobileMenuOpen ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'
+                }`}>
+                    <div className="max-h-[calc(100vh-3.5rem)] sm:max-h-[calc(100vh-4rem)] overflow-y-auto overscroll-contain">
+                        <div className="py-4 space-y-1">
                             {/* Mobile Search */}
-                            <div className="px-4 mb-4">
-                                <div className="flex items-center bg-gray-100 rounded-lg px-3 py-2">
-                                    <Search className="h-4 w-4 text-gray-400 mr-2" />
+                            <div className="px-4 mb-6">
+                                <div className="flex items-center bg-gray-100 rounded-lg px-3 py-3">
+                                    <Search className="h-4 w-4 text-gray-400 mr-2 flex-shrink-0" />
                                     <input
                                         type="text"
                                         placeholder="Search complaints..."
-                                        className="bg-transparent border-0 focus:ring-0 text-sm flex-1 text-gray-700 placeholder-gray-500"
+                                        value={searchTerm}
+                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                        className="bg-transparent border-0 focus:ring-0 text-sm flex-1 text-gray-700 placeholder-gray-500 min-w-0"
                                     />
                                 </div>
                             </div>
@@ -699,62 +821,104 @@ const Header = ({ navigate, currentPath }) => {
                             {navItems.map(({ path, label, icon: Icon }) => (
                                 <button
                                     key={path}
-                                    onClick={() => {
-                                        navigate(path);
-                                        setIsMobileMenuOpen(false);
-                                    }}
-                                    className={`w-full flex items-center space-x-3 px-4 py-3 text-left transition-all duration-300 ${
+                                    onClick={() => handleMobileNavigation(path)}
+                                    className={`w-full flex items-center space-x-3 px-6 py-4 text-left transition-all duration-300 touch-manipulation ${
                                         isActivePath(path)
                                             ? 'bg-indigo-50 text-indigo-700 border-r-4 border-indigo-500'
-                                            : 'text-gray-600 hover:bg-gray-50 hover:text-indigo-600'
+                                            : 'text-gray-600 hover:bg-gray-50 hover:text-indigo-600 active:bg-gray-100'
                                     }`}
+                                    style={{ minHeight: '56px' }}
                                 >
-                                    <Icon className="h-5 w-5" />
-                                    <span className="font-medium">{label}</span>
+                                    <Icon className="h-5 w-5 flex-shrink-0" />
+                                    <span className="font-medium text-base">{label}</span>
                                 </button>
                             ))}
 
                             {/* Mobile Staff Login */}
-                            {/* Updated Mobile Staff/User Login */}
-<button
-    onClick={() => {
-        if (currentPath === '/staff-login') {
-            navigate('/');
-        } else {
-            navigate('/staff-login');
-        }
-        setIsMobileMenuOpen(false);
-    }}
-    className="w-full flex items-center space-x-3 px-4 py-3 text-left text-orange-700 hover:bg-orange-50 transition-all duration-300"
->
-    {currentPath === '/staff-login' ? (
-        <User className="h-5 w-5" />
-    ) : (
-        <Shield className="h-5 w-5" />
-    )}
-    <span className="font-medium">
-        {currentPath === '/staff-login' ? 'User Login' : 'Staff Login'}
-    </span>
-</button>
+                            <button
+                                onClick={() => {
+                                    if (currentPath === '/staff-login') {
+                                        handleMobileNavigation('/');
+                                    } else {
+                                        handleMobileNavigation('/staff-login');
+                                    }
+                                }}
+                                className="w-full flex items-center space-x-3 px-6 py-4 text-left text-orange-700 hover:bg-orange-50 transition-all duration-300 active:bg-orange-100 touch-manipulation"
+                                style={{ minHeight: '56px' }}
+                            >
+                                {currentPath === '/staff-login' ? (
+                                    <User className="h-5 w-5 flex-shrink-0" />
+                                ) : (
+                                    <Shield className="h-5 w-5 flex-shrink-0" />
+                                )}
+                                <span className="font-medium text-base">
+                                    {currentPath === '/staff-login' ? 'User Login' : 'Staff Login'}
+                                </span>
+                            </button>
 
+                            {/* Mobile Quick Actions */}
+                            <div className="px-4 pt-4 border-t border-gray-200 mt-4">
+                                <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3 px-2">
+                                    Quick Actions
+                                </h3>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <button
+                                        onClick={() => handleMobileNavigation('/submit')}
+                                        className="flex flex-col items-center justify-center p-4 bg-indigo-50 rounded-lg border border-indigo-200 hover:bg-indigo-100 transition-colors touch-manipulation"
+                                        style={{ minHeight: '80px' }}
+                                    >
+                                        <FileText className="h-6 w-6 text-indigo-600 mb-2" />
+                                        <span className="text-sm font-medium text-indigo-700">File Complaint</span>
+                                    </button>
+                                    <button
+                                        onClick={() => handleMobileNavigation('/track')}
+                                        className="flex flex-col items-center justify-center p-4 bg-blue-50 rounded-lg border border-blue-200 hover:bg-blue-100 transition-colors touch-manipulation"
+                                        style={{ minHeight: '80px' }}
+                                    >
+                                        <Search className="h-6 w-6 text-blue-600 mb-2" />
+                                        <span className="text-sm font-medium text-blue-700">Track Status</span>
+                                    </button>
+                                </div>
+                            </div>
 
                             {/* Emergency Contact in Mobile */}
-                            <div className="mx-4 mt-4 p-3 bg-red-50 rounded-lg border border-red-200">
-                                <div className="flex items-center space-x-2 text-red-700">
-                                    <Phone className="h-4 w-4" />
-                                    <span className="text-sm font-bold">Emergency: 139</span>
+                            <div className="mx-4 mt-6 p-4 bg-red-50 rounded-lg border border-red-200">
+                                <div className="flex items-center space-x-3 text-red-700">
+                                    <Phone className="h-5 w-5 flex-shrink-0" />
+                                    <div>
+                                        <div className="font-bold text-base">Emergency: 139</div>
+                                        <div className="text-sm">24/7 Support Available</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Mobile Footer */}
+                            <div className="px-4 pt-6 pb-4 border-t border-gray-200 mt-6">
+                                <div className="text-center">
+                                    <p className="text-xs text-gray-500">
+                                        RailCare - Smart Complaint Resolution
+                                    </p>
+                                    <p className="text-xs text-gray-400 mt-1">
+                                        © 2025 Indian Railways
+                                    </p>
                                 </div>
                             </div>
                         </div>
                     </div>
+                </div>
+
+                {/* Mobile Menu Backdrop */}
+                {isMobileMenuOpen && (
+                    <div 
+                        className="lg:hidden fixed inset-0 bg-black bg-opacity-25 z-30"
+                        onClick={handleMobileMenuToggle}
+                    />
                 )}
             </nav>
-
-            {/* Status Bar */}
-            
         </header>
     );
 };
+
 
 
 

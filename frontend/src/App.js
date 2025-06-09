@@ -1454,18 +1454,14 @@ const ComplaintFormPage = ({ onComplaintSubmit }) => {
     };
 
     const handleTouchMove = (e) => {
-        const touchY = e.touches[0].clientY;
-        const touchDiff = touchStartY - touchY;
-        
-        // FIXED: Only prevent overscroll at document level, not within scrollable areas
-        const target = e.target;
-        const isScrollableElement = target.closest('.scrollable-content, textarea, input, [data-scrollable]');
-        
-        // Only prevent bounce if we're at the top of the document and not in a scrollable element
-        if (!isScrollableElement && touchDiff > 0 && window.scrollY === 0) {
+    // Only prevent overscroll in very specific edge cases
+    if (window.scrollY === 0 && e.touches[0].clientY > touchStartY + 100) {
+        const isFormElement = e.target.closest('input, textarea, select, button');
+        if (!isFormElement) {
             e.preventDefault();
         }
-    };
+    }
+};
 
     const handleOrientationChange = () => {
         // FIXED: Add proper viewport reset and scroll restoration

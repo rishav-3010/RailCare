@@ -1604,42 +1604,46 @@ const ComplaintFormPage = ({ onComplaintSubmit }) => {
         <div className="w-full max-w-2xl mx-auto px-3 sm:px-4">
             <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
                 {/* Mobile-optimized header */}
-                <div className="p-4 sm:p-6 lg:p-8 border-b border-gray-100 bg-gradient-to-r from-indigo-50 to-blue-50">
-                    <div className="text-center">
-                        <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-2">File a New Grievance</h2>
-                        <p className="text-sm sm:text-base text-gray-600">Follow the steps to submit your complaint</p>
-                    </div>
-                </div>
+<div className="p-4 sm:p-6 lg:p-8 border-b border-gray-100 bg-gradient-to-r from-indigo-50 to-blue-50">
+    <div className="text-center">
+        <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-2">File a New Grievance</h2>
+        <p className="text-sm sm:text-base text-gray-600">Follow the steps to submit your complaint</p>
+    </div>
+</div>
 
-                {/* Mobile-optimized progress indicator */}
-                <div className="px-4 sm:px-6 lg:px-8 py-4 sm:py-6 bg-white sticky top-0 z-10 border-b border-gray-100">
-                    <div className="w-full flex items-center">
-                        {[1, 2, 3, 4].map((s, index) => (
-                            <React.Fragment key={s}>
-                                <div className="flex flex-col items-center flex-1">
-                                    <div 
-                                        className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-bold text-xs sm:text-sm transition-all duration-300 ${
-                                            step >= s ? 'bg-indigo-600 text-white shadow-lg' : 'bg-gray-200 text-gray-500'
-                                        }`}
-                                        style={{ minWidth: '32px', minHeight: '32px' }}
-                                    >
-                                        {step > s ? <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5" /> : s}
-                                    </div>
-                                    <p className={`mt-1 sm:mt-2 text-xs font-medium text-center leading-tight ${
-                                        step >= s ? 'text-indigo-600' : 'text-gray-500'
-                                    }`}>
-                                        {s === 1 ? 'Journey' : s === 2 ? 'Details' : s === 3 ? 'Contact' : 'Review'}
-                                    </p>
-                                </div>
-                                {s < 4 && (
-                                    <div className={`flex-auto h-1 mx-1 sm:mx-2 rounded-full transition-all duration-300 ${
-                                        step > s ? 'bg-indigo-600' : 'bg-gray-200'
-                                    }`} style={{ minWidth: '20px' }}></div>
-                                )}
-                            </React.Fragment>
-                        ))}
+{/* Mobile-optimized progress indicator - FIXED */}
+<div className="px-2 sm:px-4 lg:px-8 py-4 sm:py-6 bg-white sticky top-0 z-10 border-b border-gray-100">
+    <div className="w-full flex items-center justify-between">
+        {[1, 2, 3, 4].map((s, index) => (
+            <React.Fragment key={s}>
+                <div className="flex flex-col items-center min-w-0 flex-shrink-0">
+                    <div 
+                        className={`w-7 h-7 sm:w-8 sm:h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center font-bold text-xs sm:text-sm transition-all duration-300 flex-shrink-0 ${
+                            step >= s ? 'bg-indigo-600 text-white shadow-lg' : 'bg-gray-200 text-gray-500'
+                        }`}
+                    >
+                        {step > s ? <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4 md:h-5 md:w-5" /> : s}
                     </div>
+                    <p className={`mt-1 sm:mt-2 text-xs font-medium text-center leading-tight max-w-[60px] sm:max-w-none truncate ${
+                        step >= s ? 'text-indigo-600' : 'text-gray-500'
+                    }`}>
+                        <span className="hidden xs:inline sm:inline">
+                            {s === 1 ? 'Journey' : s === 2 ? 'Details' : s === 3 ? 'Contact' : 'Review'}
+                        </span>
+                        <span className="xs:hidden sm:hidden">
+                            {s === 1 ? 'J' : s === 2 ? 'D' : s === 3 ? 'C' : 'R'}
+                        </span>
+                    </p>
                 </div>
+                {s < 4 && (
+                    <div className={`flex-1 h-0.5 sm:h-1 mx-1 sm:mx-2 rounded-full transition-all duration-300 min-w-[10px] ${
+                        step > s ? 'bg-indigo-600' : 'bg-gray-200'
+                    }`}></div>
+                )}
+            </React.Fragment>
+        ))}
+    </div>
+</div>
 
                 {/* Mobile-optimized form content */}
                 <div className="p-4 sm:p-6 lg:p-8">
@@ -2037,7 +2041,7 @@ const ComplaintFormPage = ({ onComplaintSubmit }) => {
                                     </>
                                 ) : (
                                     <>
-                                        <CheckCircle className="h-4 w-4" />
+                                        <CheckCircle className="h-2 w-2" />
                                         <span>Submit Complaint</span>
                                     </>
                                 )}

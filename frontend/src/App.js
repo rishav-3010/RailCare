@@ -2492,24 +2492,24 @@ const ComplaintDetailsPage = ({ complaint, onBack }) => {
                 </div>
                 
                 <div className="border-t border-gray-200 pt-4">
-                    <div className="flex space-x-3">
-                        <input
-                            type="text"
-                            placeholder="Type your message here..."
-                            value={newMessage}
-                            onChange={(e) => setNewMessage(e.target.value)}
-                            onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-                            className="flex-1 border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                        />
-                        <button 
-                            onClick={handleSendMessage} 
-                            className="bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 transition-colors flex items-center space-x-2 font-medium"
-                        >
-                            <Send className="h-4 w-4" />
-                            <span>Send</span>
-                        </button>
-                    </div>
-                </div>
+    <div className="flex gap-2 sm:gap-3">
+        <input
+            type="text"
+            placeholder="Type your message here..."
+            value={newMessage}
+            onChange={(e) => setNewMessage(e.target.value)}
+            onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+            className="flex-1 min-w-0 border border-gray-300 rounded-lg px-3 sm:px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm"
+        />
+        <button 
+            onClick={handleSendMessage} 
+            className="bg-indigo-600 text-white px-3 sm:px-6 py-3 rounded-lg hover:bg-indigo-700 transition-colors flex items-center justify-center gap-1 sm:gap-2 font-medium text-sm whitespace-nowrap flex-shrink-0"
+        >
+            <Send className="h-4 w-4" />
+            <span className="hidden sm:inline">Send</span>
+        </button>
+    </div>
+</div>
             </div>
         </div>
     );

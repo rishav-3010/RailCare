@@ -126,11 +126,12 @@ const analyzeComplaintText = (text) => {
 
 // Enhanced category selection with smart suggestions
 // Enhanced description textarea with analysis state tracking
-const SmartDescriptionTextarea = ({ formData, handleFormChange, onTextAnalysis }) => {
+const SmartDescriptionTextarea = ({ formData, handleFormChange, onTextAnalysis, error }) => {
     const [analysisTimeout, setAnalysisTimeout] = useState(null);
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [hasAnalyzed, setHasAnalyzed] = useState(false);
     const [wordCount, setWordCount] = useState(0);
+    const [isFocused, setIsFocused] = useState(false);
     
     const handleDescriptionChange = (e) => {
         const value = e.target.value;
@@ -182,29 +183,49 @@ const SmartDescriptionTextarea = ({ formData, handleFormChange, onTextAnalysis }
                 <textarea 
                     id="description" 
                     value={formData.description} 
-                    onChange={handleDescriptionChange} 
-                    rows="5" 
-                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none transition-all duration-300" 
+                    onChange={handleDescriptionChange}
+                    onFocus={() => setIsFocused(true)}
+                    onBlur={() => setIsFocused(false)}
+                    rows={isFocused ? "6" : "5"}
+                    className={`w-full px-4 py-3 border-2 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none transition-all duration-300 text-base ${
+                        error ? 'border-red-300 error-field' : 'border-gray-300'
+                    }`}
                     placeholder="Provide all relevant details including date, time, location, and specific issues you encountered. Our AI will analyze your text to suggest the most appropriate category."
                     required
+                    style={{ fontSize: '16px' }} // Prevent zoom on iOS
                 />
                 
-                {/* Word count and analysis status */}
-                <div className="absolute bottom-2 right-2 text-xs text-gray-500 bg-white px-2 py-1 rounded">
-                    {wordCount} words
-                    {formData.description.length > 20 && !isAnalyzing && hasAnalyzed && (
-                        <span className="ml-2 text-green-600">✓ Analyzed</span>
-                    )}
+                {/* Mobile-optimized word count */}
+                <div className="absolute bottom-2 right-2 text-xs text-gray-500 bg-white px-2 py-1 rounded shadow-sm">
+                    <div className="flex items-center space-x-2">
+                        <span>{wordCount} words</span>
+                        {formData.description.length > 20 && !isAnalyzing && hasAnalyzed && (
+                            <span className="text-green-600">✓</span>
+                        )}
+                    </div>
                 </div>
             </div>
             
-            {/* Writing hints */}
-            <div className="text-xs text-gray-600 bg-gray-50 p-3 rounded-lg">
-                <strong>💡 Tip:</strong> Include specific keywords like "heart attack", "emergency", "fire", "refund", "food quality" etc. to help our AI suggest the best category for faster resolution.
+            {error && (
+                <p className="text-sm text-red-600 flex items-center space-x-1">
+                    <AlertTriangle className="h-4 w-4" />
+                    <span>{error}</span>
+                </p>
+            )}
+            
+            {/* Mobile-optimized writing hints */}
+            <div className="text-xs text-gray-600 bg-gray-50 p-3 rounded-lg border border-gray-200">
+                <div className="flex items-start space-x-2">
+                    <span className="text-lg">💡</span>
+                    <div>
+                        <strong>Tip:</strong> Include specific keywords like "heart attack", "emergency", "fire", "refund", "food quality" etc. to help our AI suggest the best category for faster resolution.
+                    </div>
+                </div>
             </div>
         </div>
     );
 };
+
 
 // Smart suggestion component
 // Auto Category Display Component (replaces dropdown)
@@ -221,27 +242,29 @@ const AutoCategoryDisplay = ({ detectedCategory, hasAnalyzedText }) => {
             
             <div className="w-full px-4 py-3 border-2 rounded-lg bg-gray-50 min-h-[52px] flex items-center justify-between">
                 {detectedCategory ? (
-                    <div className="flex items-center space-x-3">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-3 space-y-2 sm:space-y-0 w-full">
                         <div className="flex items-center space-x-2">
                             <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
-                            <span className="font-bold text-green-800">
+                            <span className="font-bold text-green-800 text-sm sm:text-base">
                                 Category: {detectedCategory.category}
                             </span>
                         </div>
-                        <div className="px-2 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-full">
-                            Auto-detected
-                        </div>
-                        {detectedCategory.priority === 'critical' && (
-                            <div className="px-2 py-1 bg-red-100 text-red-700 text-xs font-bold rounded-full animate-pulse">
-                                CRITICAL PRIORITY
+                        <div className="flex items-center space-x-2">
+                            <div className="px-2 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-full">
+                                Auto-detected
                             </div>
-                        )}
+                            {detectedCategory.priority === 'critical' && (
+                                <div className="px-2 py-1 bg-red-100 text-red-700 text-xs font-bold rounded-full animate-pulse">
+                                    CRITICAL PRIORITY
+                                </div>
+                            )}
+                        </div>
                     </div>
                 ) : hasAnalyzedText ? (
-                    <div className="flex items-center space-x-3">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-3 space-y-2 sm:space-y-0 w-full">
                         <div className="flex items-center space-x-2">
                             <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
-                            <span className="font-medium text-orange-800">Category: To be assigned</span>
+                            <span className="font-medium text-orange-800 text-sm sm:text-base">Category: To be assigned</span>
                         </div>
                         <div className="px-2 py-1 bg-orange-100 text-orange-700 text-xs font-medium rounded-full">
                             Manual review needed
@@ -250,7 +273,7 @@ const AutoCategoryDisplay = ({ detectedCategory, hasAnalyzedText }) => {
                 ) : (
                     <div className="flex items-center space-x-2">
                         <div className="w-3 h-3 bg-gray-400 rounded-full"></div>
-                        <span className="text-gray-500">Waiting for description analysis...</span>
+                        <span className="text-gray-500 text-sm sm:text-base">Waiting for description analysis...</span>
                     </div>
                 )}
             </div>
@@ -258,30 +281,19 @@ const AutoCategoryDisplay = ({ detectedCategory, hasAnalyzedText }) => {
             {detectedCategory && (
                 <div className="mt-3 p-4 bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 rounded-lg">
                     <div className="flex items-start space-x-3">
-                        <div className="p-1 bg-green-100 rounded-lg">
+                        <div className="p-1 bg-green-100 rounded-lg flex-shrink-0">
                             <CheckCircle className="h-4 w-4 text-green-600" />
                         </div>
-                        <div className="flex-1">
+                        <div className="flex-1 min-w-0">
                             <h4 className="font-bold text-green-800 text-sm">Auto-Assignment Details</h4>
-                            <p className="text-green-700 text-sm mt-1">
-                                <strong>Subcategory:</strong> {detectedCategory.subcategory}
-                            </p>
-                            <p className="text-green-700 text-sm">
-                                <strong>Assigned To:</strong> {detectedCategory.department}
-                            </p>
-                            {/* <p className="text-green-700 text-sm">
-                                <strong>Priority:</strong> {detectedCategory.priority?.toUpperCase() || 'MEDIUM'}
-                            </p>
-                            <p className="text-green-700 text-sm">
-                                <strong>Confidence:</strong> {Math.round(detectedCategory.confidence * 100)}%
-                            </p> */}
-                            {/* <div className="text-xs text-green-600 mt-2">
-                                <span>Matched keywords: </span>
-                                <span className="font-medium">
-                                    {detectedCategory.matchedKeywords.slice(0, 3).join(', ')}
-                                    {detectedCategory.matchedKeywords.length > 3 && ` +${detectedCategory.matchedKeywords.length - 3} more`}
-                                </span>
-                            </div> */}
+                            <div className="space-y-1 mt-1">
+                                <p className="text-green-700 text-sm">
+                                    <strong>Subcategory:</strong> <span className="break-words">{detectedCategory.subcategory}</span>
+                                </p>
+                                <p className="text-green-700 text-sm">
+                                    <strong>Assigned To:</strong> <span className="break-words">{detectedCategory.department}</span>
+                                </p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -290,12 +302,12 @@ const AutoCategoryDisplay = ({ detectedCategory, hasAnalyzedText }) => {
             {hasAnalyzedText && !detectedCategory && (
                 <div className="mt-3 p-4 bg-gradient-to-r from-orange-50 to-yellow-50 border-2 border-orange-200 rounded-lg">
                     <div className="flex items-start space-x-3">
-                        <div className="p-1 bg-orange-100 rounded-lg">
+                        <div className="p-1 bg-orange-100 rounded-lg flex-shrink-0">
                             <AlertTriangle className="h-4 w-4 text-orange-600" />
                         </div>
-                        <div className="flex-1">
+                        <div className="flex-1 min-w-0">
                             <h4 className="font-bold text-orange-800 text-sm">Manual Assignment Required</h4>
-                            <p className="text-orange-700 text-sm mt-1">
+                            <p className="text-orange-700 text-sm mt-1 leading-relaxed">
                                 Our system couldn't automatically categorize your complaint. It will be manually reviewed and assigned to the appropriate department.
                             </p>
                             <div className="text-xs text-orange-600 mt-2">
@@ -1335,7 +1347,12 @@ const ComplaintFormPage = ({ onComplaintSubmit }) => {
     const [isFetching, setIsFetching] = useState(false);
     const [noPnr, setNoPnr] = useState(false);
     const [detectedCategory, setDetectedCategory] = useState(null);
-const [hasAnalyzedText, setHasAnalyzedText] = useState(false);
+    const [hasAnalyzedText, setHasAnalyzedText] = useState(false);
+    const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
+    const [formErrors, setFormErrors] = useState({});
+    const [touchStartY, setTouchStartY] = useState(0);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [currentFocus, setCurrentFocus] = useState(null);
 
     const [formData, setFormData] = useState({
         category: '',
@@ -1347,62 +1364,177 @@ const [hasAnalyzedText, setHasAnalyzedText] = useState(false);
         phone: ''
     });
 
-    const handleNext = () => {
-        if (step === 1 && !pnr && !noPnr) {
-            alert('Please enter a PNR or check the box.');
-            return;
+    // Mobile-specific viewport and keyboard handling
+    useEffect(() => {
+        const handleResize = () => {
+            const viewportHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+            const screenHeight = window.screen.height;
+            setIsKeyboardVisible(viewportHeight < screenHeight * 0.75);
+        };
+
+        const handleTouchStart = (e) => {
+            setTouchStartY(e.touches[0].clientY);
+        };
+
+        const handleTouchMove = (e) => {
+            const touchY = e.touches[0].clientY;
+            const touchDiff = touchStartY - touchY;
+            
+            // Prevent overscroll on iOS
+            if (touchDiff > 0 && window.scrollY === 0) {
+                e.preventDefault();
+            }
+        };
+
+        const handleOrientationChange = () => {
+            // Handle orientation changes on mobile
+            setTimeout(() => {
+                window.scrollTo(0, 0);
+            }, 100);
+        };
+
+        if (window.visualViewport) {
+            window.visualViewport.addEventListener('resize', handleResize);
         }
-        if (step === 2 && (!formData.category || !formData.title || !formData.description)) {
-            alert('Please fill all required fields.');
-            return;
+        window.addEventListener('resize', handleResize);
+        window.addEventListener('orientationchange', handleOrientationChange);
+        document.addEventListener('touchstart', handleTouchStart, { passive: true });
+        document.addEventListener('touchmove', handleTouchMove, { passive: false });
+
+        return () => {
+            if (window.visualViewport) {
+                window.visualViewport.removeEventListener('resize', handleResize);
+            }
+            window.removeEventListener('resize', handleResize);
+            window.removeEventListener('orientationchange', handleOrientationChange);
+            document.removeEventListener('touchstart', handleTouchStart);
+            document.removeEventListener('touchmove', handleTouchMove);
+        };
+    }, [touchStartY]);
+
+    // Mobile-optimized validation with enhanced error handling
+    const validateStep = (stepNumber) => {
+        const errors = {};
+        
+        switch (stepNumber) {
+            case 1:
+                if (!pnr && !noPnr) {
+                    errors.pnr = 'Please enter a PNR or check the box for non-journey complaints';
+                }
+                if (pnr && pnr.length !== 10) {
+                    errors.pnr = 'PNR must be exactly 10 digits';
+                }
+                if (pnr && !/^\d{10}$/.test(pnr)) {
+                    errors.pnr = 'PNR must contain only numbers';
+                }
+                break;
+            case 2:
+                if (!formData.title.trim()) {
+                    errors.title = 'Complaint title is required';
+                }
+                if (formData.title.length < 10) {
+                    errors.title = 'Title must be at least 10 characters';
+                }
+                if (!formData.description.trim()) {
+                    errors.description = 'Detailed description is required';
+                }
+                if (formData.description.length < 20) {
+                    errors.description = 'Description must be at least 20 characters';
+                }
+                break;
+            case 3:
+                if (!formData.email.trim()) {
+                    errors.email = 'Email address is required';
+                }
+                if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+                    errors.email = 'Please enter a valid email address';
+                }
+                if (!formData.phone.trim()) {
+                    errors.phone = 'Phone number is required';
+                }
+                if (!/^[\+]?[1-9][\d]{9,14}$/.test(formData.phone.replace(/\s/g, ''))) {
+                    errors.phone = 'Please enter a valid phone number';
+                }
+                break;
         }
-        if (step === 3 && (!formData.email || !formData.phone)) {
-            alert('Please provide your contact information.');
-            return;
-        }
-        if (step < 4) setStep(step + 1);
+        
+        setFormErrors(errors);
+        return Object.keys(errors).length === 0;
     };
+
+    const handleNext = () => {
+        if (!validateStep(step)) {
+            // Mobile-optimized error handling with smooth scroll
+            const firstError = document.querySelector('.error-field');
+            if (firstError) {
+                firstError.scrollIntoView({ 
+                    behavior: 'smooth', 
+                    block: 'center',
+                    inline: 'nearest'
+                });
+                // Haptic feedback on mobile
+                if (navigator.vibrate) {
+                    navigator.vibrate(100);
+                }
+            }
+            return;
+        }
+        
+        if (step < 4) {
+            setStep(step + 1);
+            // Scroll to top on step change for mobile
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            
+            // Success haptic feedback
+            if (navigator.vibrate) {
+                navigator.vibrate(50);
+            }
+        }
+    };
+
     // Add this function to handle text analysis
-// Update the text analysis handler
-const handleTextAnalysis = (text, analyzed = false) => {
-    setHasAnalyzedText(analyzed); // ✅ This should now work correctly
-    const categoryData = analyzeComplaintText(text);
-    setDetectedCategory(categoryData);
-    
-    // Auto-set category in form data
-    if (categoryData) {
-        setFormData(prev => ({
-            ...prev,
-            category: categoryData.category,
-            assignedTo: categoryData.department,
-            subcategory: categoryData.subcategory,
-            priority: categoryData.priority
-        }));
-    } else {
-        setFormData(prev => ({
-            ...prev,
-            category: 'To be assigned',
-            assignedTo: 'General Grievance Cell',
-            subcategory: '',
-            priority: 'medium'
-        }));
-    }
-};
+    // Update the text analysis handler
+    const handleTextAnalysis = (text, analyzed = false) => {
+        setHasAnalyzedText(analyzed); // ✅ This should now work correctly
+        const categoryData = analyzeComplaintText(text);
+        setDetectedCategory(categoryData);
+        
+        // Auto-set category in form data
+        if (categoryData) {
+            setFormData(prev => ({
+                ...prev,
+                category: categoryData.category,
+                assignedTo: categoryData.department,
+                subcategory: categoryData.subcategory,
+                priority: categoryData.priority
+            }));
+        } else {
+            setFormData(prev => ({
+                ...prev,
+                category: 'To be assigned',
+                assignedTo: 'General Grievance Cell',
+                subcategory: '',
+                priority: 'medium'
+            }));
+        }
+    };
 
-
-
-
-    
     const handleBack = () => {
-        if (step > 1) setStep(step - 1);
+        if (step > 1) {
+            setStep(step - 1);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
     };
 
     const handlePnrFetch = () => {
         if (!pnr || pnr.length !== 10) {
-            alert('Please enter a valid 10-digit PNR.');
+            setFormErrors({ pnr: 'Please enter a valid 10-digit PNR' });
             return;
         }
         setIsFetching(true);
+        setFormErrors({});
+        
+        // Simulate API call with mobile-friendly loading
         setTimeout(() => {
             setPnrDetails({
                 trainName: '12002 - SHATABDI EXP',
@@ -1411,310 +1543,512 @@ const handleTextAnalysis = (text, analyzed = false) => {
                 class: 'CC (AC Chair Car)'
             });
             setIsFetching(false);
+            
+            // Success haptic feedback
+            if (navigator.vibrate) {
+                navigator.vibrate([50, 50, 50]);
+            }
         }, 1000);
     };
 
     const handleFormChange = (e) => {
         const { id, value, type, checked } = e.target;
         setFormData(prev => ({...prev, [id]: type === 'checkbox' ? checked : value }));
-    }
+        
+        // Clear error when user starts typing
+        if (formErrors[id]) {
+            setFormErrors(prev => ({ ...prev, [id]: '' }));
+        }
+    };
 
     const handleSubmit = () => {
+        if (!validateStep(4)) return;
+        
+        setIsSubmitting(true);
         const fullComplaint = { ...formData, pnr: noPnr ? 'N/A' : pnr };
-        onComplaintSubmit(fullComplaint);
-    }
-    
+        
+        // Simulate submission delay for better UX
+        setTimeout(() => {
+            onComplaintSubmit(fullComplaint);
+            setIsSubmitting(false);
+            
+            // Success haptic feedback
+            if (navigator.vibrate) {
+                navigator.vibrate([100, 50, 100, 50, 100]);
+            }
+        }, 1000);
+    };
+
+    // Mobile-optimized file handling
+    const handleFileChange = (e) => {
+        const files = Array.from(e.target.files);
+        const maxSize = 5 * 1024 * 1024; // 5MB
+        const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'];
+        
+        const validFiles = files.filter(file => {
+            if (file.size > maxSize) {
+                alert(`File ${file.name} is too large. Maximum size is 5MB.`);
+                return false;
+            }
+            if (!allowedTypes.includes(file.type)) {
+                alert(`File ${file.name} is not a supported format.`);
+                return false;
+            }
+            return true;
+        });
+        
+        setFormData(prev => ({ ...prev, files: validFiles }));
+    };
+
     return (
-        <div className="max-w-2xl mx-auto">
-            <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
-                <div className="text-center mb-8">
-                    <h2 className="text-2xl font-bold text-gray-800 mb-2">File a New Grievance</h2>
-                    <p className="text-gray-600">Follow the steps to submit your complaint</p>
-                </div>
-                
-                <div className="w-full flex items-center mb-8">
-                    {[1, 2, 3, 4].map((s, index) => (
-                        <React.Fragment key={s}>
-                            <div className="flex flex-col items-center">
-                                <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm transition-all duration-300 ${
-                                    step >= s ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-500'
-                                }`}>
-                                    {step > s ? <CheckCircle className="h-5 w-5" /> : s}
-                                </div>
-                                <p className={`mt-2 text-xs font-medium ${step >= s ? 'text-indigo-600' : 'text-gray-500'}`}>
-                                    {s === 1 ? 'Journey' : s === 2 ? 'Details' : s === 3 ? 'Contact' : 'Review'}
-                                </p>
-                            </div>
-                            {s < 4 && (
-                                <div className={`flex-auto h-1 mx-2 rounded-full transition-all duration-300 ${
-                                    step > s ? 'bg-indigo-600' : 'bg-gray-200'
-                                }`}></div>
-                            )}
-                        </React.Fragment>
-                    ))}
-                </div>
-
-                {step === 1 && (
-                    <div className="space-y-6">
-                        <h3 className="text-lg font-bold text-gray-800">Step 1: Journey Details</h3>
-                        <div>
-                            <label htmlFor="pnr" className="block text-sm font-medium text-gray-700 mb-2">PNR Number</label>
-                            <div className="flex gap-3">
-                                <input 
-                                    type="text" 
-                                    id="pnr" 
-                                    value={pnr} 
-                                    onChange={e => setPnr(e.target.value)} 
-                                    disabled={noPnr} 
-                                    className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent disabled:bg-gray-100" 
-                                    placeholder="Enter your 10-digit PNR" 
-                                />
-                                <button 
-                                    onClick={handlePnrFetch} 
-                                    disabled={noPnr || isFetching} 
-                                    className="px-6 py-3 bg-gray-200 text-gray-700 font-medium rounded-lg hover:bg-gray-300 disabled:opacity-50 transition-colors"
-                                >
-                                    {isFetching ? 'Fetching...' : 'Fetch'}
-                                </button>
-                            </div>
-                        </div>
-                        
-                        {pnrDetails && !noPnr && (
-                            <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-                                <div className="flex items-center space-x-2 mb-2">
-                                    <CheckCircle className="h-5 w-5 text-green-600" />
-                                    <h4 className="font-bold text-green-800">Journey Details Found</h4>
-                                </div>
-                                <div className="space-y-1 text-sm">
-                                    <p><strong>Train:</strong> {pnrDetails.trainName}</p>
-                                    <p><strong>Date:</strong> {pnrDetails.journeyDate}</p>
-                                    <p><strong>Route:</strong> {pnrDetails.route}</p>
-                                    <p><strong>Class:</strong> {pnrDetails.class}</p>
-                                </div>
-                            </div>
-                        )}
-                        
-                        <div className="flex items-start space-x-3 p-4 bg-gray-50 rounded-lg">
-                            <input 
-                                type="checkbox" 
-                                id="noPnr" 
-                                checked={noPnr} 
-                                onChange={e => setNoPnr(e.target.checked)} 
-                                className="mt-1 h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
-                            />
-                            <div>
-                                <label htmlFor="noPnr" className="font-medium text-gray-700 cursor-pointer">
-                                    My complaint is not related to a specific journey
-                                </label>
-                                <p className="text-sm text-gray-500 mt-1">
-                                    Select this for general service issues, website problems, etc.
-                                </p>
-                            </div>
-                        </div>
+        <div className="w-full max-w-2xl mx-auto px-3 sm:px-4">
+            <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                {/* Mobile-optimized header */}
+                <div className="p-4 sm:p-6 lg:p-8 border-b border-gray-100 bg-gradient-to-r from-indigo-50 to-blue-50">
+                    <div className="text-center">
+                        <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-2">File a New Grievance</h2>
+                        <p className="text-sm sm:text-base text-gray-600">Follow the steps to submit your complaint</p>
                     </div>
-                )}
+                </div>
 
-                {step === 2 && (
-    <div className="space-y-6">
-        <h3 className="text-lg font-bold text-gray-800">Step 2: Describe Your Issue</h3>
-        
-        
-        
-        <div>
-            <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
-                Complaint Title
-                <span className="text-red-500 ml-1">*</span>
-            </label>
-            <input 
-                type="text" 
-                id="title" 
-                value={formData.title} 
-                onChange={handleFormChange} 
-                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent" 
-                placeholder="Brief summary of the issue" 
-                required
-            />
-        </div>
-        
-        <SmartDescriptionTextarea 
-            formData={formData}
-            handleFormChange={handleFormChange}
-            onTextAnalysis={handleTextAnalysis}
-        />
-        <AutoCategoryDisplay 
-            detectedCategory={detectedCategory}
-            hasAnalyzedText={hasAnalyzedText}
-        />
-        
-        {/* Rest of step 2 content remains the same */}
-        <div>
-            <label htmlFor="files" className="block text-sm font-medium text-gray-700 mb-2">Attach Evidence</label>
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-indigo-400 transition-colors">
-                <Upload className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                <input 
-                    type="file" 
-                    id="files" 
-                    multiple 
-                    className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-indigo-50 file:text-indigo-600 hover:file:bg-indigo-100" 
-                />
-                <p className="text-gray-500 text-sm mt-1">Upload images, documents, or screenshots</p>
-            </div>
-        </div>
-        
-        <div className="flex items-start space-x-3 p-4 bg-red-50 rounded-lg border border-red-200">
-            <input 
-                type="checkbox" 
-                id="isUrgent" 
-                checked={formData.isUrgent} 
-                onChange={handleFormChange} 
-                className="mt-1 h-4 w-4 text-red-600 border-red-300 rounded focus:ring-red-500" 
-            />
-            <div>
-                <label htmlFor="isUrgent" className="font-medium text-red-700 flex items-center gap-2 cursor-pointer">
-                    <AlertTriangle size={16} />
-                    Mark as Urgent
-                </label>
-                <p className="text-sm text-red-600 mt-1">
-                    Only for safety concerns or emergency situations
-                </p>
-            </div>
-        </div>
-    </div>
-)}
-
-                {step === 3 && (
-                    <div className="space-y-6">
-                        <h3 className="text-lg font-bold text-gray-800">Step 3: Contact Information</h3>
-                        <div className="space-y-4">
-                            <div>
-                                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
-                                <div className="relative">
-                                    <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                                    <input 
-                                        type="email" 
-                                        id="email" 
-                                        value={formData.email} 
-                                        onChange={handleFormChange} 
-                                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent" 
-                                        placeholder="your.email@example.com" 
-                                        required
-                                    />
-                                </div>
-                            </div>
-                            <div>
-                                <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
-                                <div className="relative">
-                                    <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                                    <input 
-                                        type="tel" 
-                                        id="phone" 
-                                        value={formData.phone} 
-                                        onChange={handleFormChange} 
-                                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent" 
-                                        placeholder="+91 9876543210" 
-                                        required
-                                    />
-                                </div>
-                            </div>
-                        </div>
-                        <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-                            <div className="flex items-start space-x-2">
-                                <Shield className="h-5 w-5 text-blue-600 mt-0.5" />
-                                <div>
-                                    <h4 className="font-medium text-blue-800">Privacy Notice</h4>
-                                    <p className="text-sm text-blue-700 mt-1">
-                                        Your contact information will be used only for complaint updates and resolution. 
-                                        We maintain strict privacy standards.
+                {/* Mobile-optimized progress indicator */}
+                <div className="px-4 sm:px-6 lg:px-8 py-4 sm:py-6 bg-white sticky top-0 z-10 border-b border-gray-100">
+                    <div className="w-full flex items-center">
+                        {[1, 2, 3, 4].map((s, index) => (
+                            <React.Fragment key={s}>
+                                <div className="flex flex-col items-center flex-1">
+                                    <div 
+                                        className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-bold text-xs sm:text-sm transition-all duration-300 ${
+                                            step >= s ? 'bg-indigo-600 text-white shadow-lg' : 'bg-gray-200 text-gray-500'
+                                        }`}
+                                        style={{ minWidth: '32px', minHeight: '32px' }}
+                                    >
+                                        {step > s ? <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5" /> : s}
+                                    </div>
+                                    <p className={`mt-1 sm:mt-2 text-xs font-medium text-center leading-tight ${
+                                        step >= s ? 'text-indigo-600' : 'text-gray-500'
+                                    }`}>
+                                        {s === 1 ? 'Journey' : s === 2 ? 'Details' : s === 3 ? 'Contact' : 'Review'}
                                     </p>
                                 </div>
-                            </div>
-                        </div>
+                                {s < 4 && (
+                                    <div className={`flex-auto h-1 mx-1 sm:mx-2 rounded-full transition-all duration-300 ${
+                                        step > s ? 'bg-indigo-600' : 'bg-gray-200'
+                                    }`} style={{ minWidth: '20px' }}></div>
+                                )}
+                            </React.Fragment>
+                        ))}
                     </div>
-                )}
+                </div>
 
-                {step === 4 && (
-                    <div className="space-y-6">
-                        <h3 className="text-lg font-bold text-gray-800">Step 4: Review & Submit</h3>
-                        <div className="space-y-4 bg-gray-50 p-6 rounded-lg">
-                            <div className="grid grid-cols-2 gap-4 text-sm">
+                {/* Mobile-optimized form content */}
+                <div className="p-4 sm:p-6 lg:p-8">
+                    {step === 1 && (
+                        <div className="space-y-6">
+                            <h3 className="text-lg sm:text-xl font-bold text-gray-800 mb-4">Step 1: Journey Details</h3>
+                            
+                            <div className="space-y-4">
                                 <div>
-                                    <span className="font-medium text-gray-500">PNR:</span>
-                                    <p className="font-bold text-gray-800">{noPnr ? 'N/A' : pnr}</p>
+                                    <label htmlFor="pnr" className="block text-sm font-medium text-gray-700 mb-2">
+                                        PNR Number
+                                    </label>
+                                    <div className="flex flex-col sm:flex-row gap-3">
+                                        <input 
+                                            type="text" 
+                                            id="pnr" 
+                                            value={pnr} 
+                                            onChange={e => setPnr(e.target.value)} 
+                                            disabled={noPnr} 
+                                            className={`flex-1 px-4 py-3 border-2 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent disabled:bg-gray-100 transition-all duration-300 text-base ${
+                                                formErrors.pnr ? 'border-red-300 error-field' : 'border-gray-300'
+                                            }`}
+                                            placeholder="Enter your 10-digit PNR" 
+                                            inputMode="numeric"
+                                            pattern="[0-9]*"
+                                            maxLength="10"
+                                            style={{ fontSize: '16px' }} // Prevent zoom on iOS
+                                        />
+                                        <button 
+                                            onClick={handlePnrFetch} 
+                                            disabled={noPnr || isFetching || !pnr} 
+                                            className="w-full sm:w-auto px-6 py-3 bg-gray-200 text-gray-700 font-medium rounded-lg hover:bg-gray-300 disabled:opacity-50 transition-colors touch-manipulation"
+                                            style={{ minHeight: '48px', minWidth: '80px' }}
+                                        >
+                                            {isFetching ? (
+                                                <div className="flex items-center justify-center space-x-2">
+                                                    <div className="w-4 h-4 border-2 border-gray-600 border-t-transparent rounded-full animate-spin"></div>
+                                                    <span>Fetching...</span>
+                                                </div>
+                                            ) : 'Fetch'}
+                                        </button>
+                                    </div>
+                                    {formErrors.pnr && (
+                                        <p className="mt-2 text-sm text-red-600 flex items-center space-x-1">
+                                            <AlertTriangle className="h-4 w-4" />
+                                            <span>{formErrors.pnr}</span>
+                                        </p>
+                                    )}
                                 </div>
-                                <div>
-                                    <span className="font-medium text-gray-500">Category:</span>
-                                    <p className="font-bold text-gray-800">{formData.category}</p>
-                                </div>
-                                <div className="col-span-2">
-                                    <span className="font-medium text-gray-500">Title:</span>
-                                    <p className="font-bold text-gray-800">{formData.title}</p>
-                                </div>
-                                <div>
-                                    <span className="font-medium text-gray-500">Email:</span>
-                                    <p className="font-bold text-gray-800">{formData.email}</p>
-                                </div>
-                                <div>
-                                    <span className="font-medium text-gray-500">Phone:</span>
-                                    <p className="font-bold text-gray-800">{formData.phone}</p>
+                                
+                                {pnrDetails && !noPnr && (
+                                    <div className="bg-green-50 p-4 rounded-lg border-2 border-green-200 animate-fadeIn">
+                                        <div className="flex items-center space-x-2 mb-3">
+                                            <CheckCircle className="h-5 w-5 text-green-600" />
+                                            <h4 className="font-bold text-green-800">Journey Details Found</h4>
+                                        </div>
+                                        <div className="space-y-2 text-sm">
+                                            <div className="flex flex-col sm:flex-row sm:justify-between">
+                                                <span className="font-medium text-gray-600">Train:</span>
+                                                <span className="text-gray-800">{pnrDetails.trainName}</span>
+                                            </div>
+                                            <div className="flex flex-col sm:flex-row sm:justify-between">
+                                                <span className="font-medium text-gray-600">Date:</span>
+                                                <span className="text-gray-800">{pnrDetails.journeyDate}</span>
+                                            </div>
+                                            <div className="flex flex-col sm:flex-row sm:justify-between">
+                                                <span className="font-medium text-gray-600">Route:</span>
+                                                <span className="text-gray-800">{pnrDetails.route}</span>
+                                            </div>
+                                            <div className="flex flex-col sm:flex-row sm:justify-between">
+                                                <span className="font-medium text-gray-600">Class:</span>
+                                                <span className="text-gray-800">{pnrDetails.class}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                                
+                                <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                                    <div className="flex items-start space-x-3">
+                                        <input 
+                                            type="checkbox" 
+                                            id="noPnr" 
+                                            checked={noPnr} 
+                                            onChange={e => setNoPnr(e.target.checked)} 
+                                            className="mt-1 h-5 w-5 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 touch-manipulation"
+                                            style={{ minWidth: '20px', minHeight: '20px' }}
+                                        />
+                                        <div className="flex-1">
+                                            <label htmlFor="noPnr" className="font-medium text-gray-700 cursor-pointer text-sm sm:text-base">
+                                                My complaint is not related to a specific journey
+                                            </label>
+                                            <p className="text-xs sm:text-sm text-gray-500 mt-1 leading-relaxed">
+                                                Select this for general service issues, website problems, etc.
+                                            </p>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                            <div>
-                                <span className="font-medium text-gray-500 text-sm">Description:</span>
-                                <p className="text-gray-700 mt-1 text-sm leading-relaxed">{formData.description}</p>
-                            </div>
-                            {formData.isUrgent && (
-                                <div className="flex items-center space-x-2 text-red-700 bg-red-100 px-3 py-2 rounded-lg">
-                                    <AlertTriangle size={16} />
-                                    <span className="font-bold text-sm">MARKED AS URGENT</span>
-                                </div>
-                            )}
                         </div>
-                        <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-                            <p className="text-xs text-blue-700 leading-relaxed">
-                                By submitting this complaint, you agree to our terms of service and acknowledge 
-                                that all information provided is accurate to the best of your knowledge.
-                            </p>
-                        </div>
-                    </div>
-                )}
-
-                <div className="mt-8 flex justify-between items-center">
-                    <button 
-                        onClick={handleBack} 
-                        disabled={step === 1} 
-                        className="flex items-center space-x-2 px-6 py-3 bg-gray-200 text-gray-700 font-medium rounded-lg hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                    >
-                        <ArrowLeft className="h-4 w-4" />
-                        <span>Back</span>
-                    </button>
-                    
-                    <div className="flex items-center space-x-2 text-sm text-gray-500">
-                        <span>Step {step} of 4</span>
-                    </div>
-                    
-                    {step < 4 ? (
-                        <button 
-                            onClick={handleNext} 
-                            className="flex items-center space-x-2 px-6 py-3 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition-colors"
-                        >
-                            <span>Next</span>
-                            <ChevronDown className="h-4 w-4 rotate-[-90deg]" />
-                        </button>
-                    ) : (
-                        <button 
-                            onClick={handleSubmit} 
-                            className="flex items-center space-x-2 px-6 py-3 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700 transition-colors"
-                        >
-                            <CheckCircle className="h-4 w-4" />
-                            <span>Submit Complaint</span>
-                        </button>
                     )}
+
+                    {step === 2 && (
+                        <div className="space-y-6">
+                            <h3 className="text-lg sm:text-xl font-bold text-gray-800 mb-4">Step 2: Describe Your Issue</h3>
+                            
+                            <div className="space-y-6">
+                                <div>
+                                    <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
+                                        Complaint Title
+                                        <span className="text-red-500 ml-1">*</span>
+                                    </label>
+                                    <input 
+                                        type="text" 
+                                        id="title" 
+                                        value={formData.title} 
+                                        onChange={handleFormChange} 
+                                        className={`w-full px-4 py-3 border-2 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-300 text-base ${
+                                            formErrors.title ? 'border-red-300 error-field' : 'border-gray-300'
+                                        }`}
+                                        placeholder="Brief summary of the issue" 
+                                        required
+                                        style={{ fontSize: '16px' }}
+                                    />
+                                    {formErrors.title && (
+                                        <p className="mt-2 text-sm text-red-600 flex items-center space-x-1">
+                                            <AlertTriangle className="h-4 w-4" />
+                                            <span>{formErrors.title}</span>
+                                        </p>
+                                    )}
+                                </div>
+                                
+                                <SmartDescriptionTextarea 
+                                    formData={formData}
+                                    handleFormChange={handleFormChange}
+                                    onTextAnalysis={handleTextAnalysis}
+                                    error={formErrors.description}
+                                />
+                                
+                                <AutoCategoryDisplay 
+                                    detectedCategory={detectedCategory}
+                                    hasAnalyzedText={hasAnalyzedText}
+                                />
+                                
+                                <div>
+                                    <label htmlFor="files" className="block text-sm font-medium text-gray-700 mb-2">
+                                        Attach Evidence
+                                        <span className="text-gray-500 ml-1">(Optional)</span>
+                                    </label>
+                                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-indigo-400 transition-colors touch-manipulation">
+                                        <Upload className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                                        <input 
+                                            type="file" 
+                                            id="files" 
+                                            multiple 
+                                            accept="image/*,.pdf"
+                                            onChange={handleFileChange}
+                                            className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-indigo-50 file:text-indigo-600 hover:file:bg-indigo-100 file:touch-manipulation" 
+                                        />
+                                        <p className="text-gray-500 text-xs sm:text-sm mt-1">
+                                            Upload images, documents, or screenshots (Max 5MB each)
+                                        </p>
+                                        {formData.files.length > 0 && (
+                                            <div className="mt-3 text-left">
+                                                <p className="text-sm font-medium text-gray-700 mb-2">Selected files:</p>
+                                                {formData.files.map((file, index) => (
+                                                    <div key={index} className="flex items-center justify-between p-2 bg-gray-100 rounded text-sm">
+                                                        <span className="truncate">{file.name}</span>
+                                                        <span className="text-gray-500 ml-2">{(file.size / 1024 / 1024).toFixed(1)}MB</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                                
+                                <div className="p-4 bg-red-50 rounded-lg border-2 border-red-200">
+                                    <div className="flex items-start space-x-3">
+                                        <input 
+                                            type="checkbox" 
+                                            id="isUrgent" 
+                                            checked={formData.isUrgent} 
+                                            onChange={handleFormChange} 
+                                            className="mt-1 h-5 w-5 text-red-600 border-red-300 rounded focus:ring-red-500 touch-manipulation" 
+                                            style={{ minWidth: '20px', minHeight: '20px' }}
+                                        />
+                                        <div className="flex-1">
+                                            <label htmlFor="isUrgent" className="font-medium text-red-700 flex items-center gap-2 cursor-pointer text-sm sm:text-base">
+                                                <AlertTriangle size={16} />
+                                                Mark as Urgent
+                                            </label>
+                                            <p className="text-xs sm:text-sm text-red-600 mt-1 leading-relaxed">
+                                                Only for safety concerns or emergency situations
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {step === 3 && (
+                        <div className="space-y-6">
+                            <h3 className="text-lg sm:text-xl font-bold text-gray-800 mb-4">Step 3: Contact Information</h3>
+                            
+                            <div className="space-y-6">
+                                <div>
+                                    <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                                        Email Address
+                                        <span className="text-red-500 ml-1">*</span>
+                                    </label>
+                                    <div className="relative">
+                                        <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                                        <input 
+                                            type="email" 
+                                            id="email" 
+                                            value={formData.email} 
+                                            onChange={handleFormChange} 
+                                            className={`w-full pl-12 pr-4 py-3 border-2 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-300 text-base ${
+                                                formErrors.email ? 'border-red-300 error-field' : 'border-gray-300'
+                                            }`}
+                                            placeholder="your.email@example.com" 
+                                            required
+                                            inputMode="email"
+                                            style={{ fontSize: '16px' }}
+                                        />
+                                    </div>
+                                    {formErrors.email && (
+                                        <p className="mt-2 text-sm text-red-600 flex items-center space-x-1">
+                                            <AlertTriangle className="h-4 w-4" />
+                                            <span>{formErrors.email}</span>
+                                        </p>
+                                    )}
+                                </div>
+                                
+                                <div>
+                                    <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
+                                        Phone Number
+                                        <span className="text-red-500 ml-1">*</span>
+                                    </label>
+                                    <div className="relative">
+                                        <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                                        <input 
+                                            type="tel" 
+                                            id="phone" 
+                                            value={formData.phone} 
+                                            onChange={handleFormChange} 
+                                            className={`w-full pl-12 pr-4 py-3 border-2 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-300 text-base ${
+                                                formErrors.phone ? 'border-red-300 error-field' : 'border-gray-300'
+                                            }`}
+                                            placeholder="+91 9876543210" 
+                                            required
+                                            inputMode="tel"
+                                            style={{ fontSize: '16px' }}
+                                        />
+                                    </div>
+                                    {formErrors.phone && (
+                                        <p className="mt-2 text-sm text-red-600 flex items-center space-x-1">
+                                            <AlertTriangle className="h-4 w-4" />
+                                            <span>{formErrors.phone}</span>
+                                        </p>
+                                    )}
+                                </div>
+                            </div>
+                            
+                            <div className="p-4 bg-blue-50 rounded-lg border-2 border-blue-200">
+                                <div className="flex items-start space-x-3">
+                                    <Shield className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                                    <div>
+                                        <h4 className="font-medium text-blue-800 text-sm sm:text-base">Privacy Notice</h4>
+                                        <p className="text-xs sm:text-sm text-blue-700 mt-1 leading-relaxed">
+                                            Your contact information will be used only for complaint updates and resolution. 
+                                            We maintain strict privacy standards.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {step === 4 && (
+                        <div className="space-y-6">
+                            <h3 className="text-lg sm:text-xl font-bold text-gray-800 mb-4">Step 4: Review & Submit</h3>
+                            
+                            <div className="space-y-4 bg-gray-50 p-4 sm:p-6 rounded-lg border border-gray-200">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                                    <div className="space-y-1">
+                                        <span className="font-medium text-gray-500">PNR:</span>
+                                        <p className="font-bold text-gray-800 break-all">{noPnr ? 'N/A' : pnr}</p>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <span className="font-medium text-gray-500">Category:</span>
+                                        <p className="font-bold text-gray-800">{formData.category}</p>
+                                    </div>
+                                    <div className="col-span-1 sm:col-span-2 space-y-1">
+                                        <span className="font-medium text-gray-500">Title:</span>
+                                        <p className="font-bold text-gray-800 break-words">{formData.title}</p>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <span className="font-medium text-gray-500">Email:</span>
+                                        <p className="font-bold text-gray-800 break-all">{formData.email}</p>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <span className="font-medium text-gray-500">Phone:</span>
+                                        <p className="font-bold text-gray-800">{formData.phone}</p>
+                                    </div>
+                                </div>
+                                
+                                <div className="space-y-1">
+                                    <span className="font-medium text-gray-500 text-sm">Description:</span>
+                                    <div className="max-h-32 overflow-y-auto">
+                                        <p className="text-gray-700 text-sm leading-relaxed break-words">{formData.description}</p>
+                                    </div>
+                                </div>
+                                
+                                {formData.files.length > 0 && (
+                                    <div className="space-y-1">
+                                        <span className="font-medium text-gray-500 text-sm">Attachments:</span>
+                                        <div className="space-y-1">
+                                            {formData.files.map((file, index) => (
+                                                <p key={index} className="text-gray-700 text-sm truncate">
+                                                    📎 {file.name} ({(file.size / 1024 / 1024).toFixed(1)}MB)
+                                                </p>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                                
+                                {formData.isUrgent && (
+                                    <div className="flex items-center space-x-2 text-red-700 bg-red-100 px-3 py-2 rounded-lg">
+                                        <AlertTriangle size={16} />
+                                        <span className="font-bold text-sm">MARKED AS URGENT</span>
+                                    </div>
+                                )}
+                            </div>
+                            
+                            <div className="p-4 bg-blue-50 rounded-lg border-2 border-blue-200">
+                                <p className="text-xs text-blue-700 leading-relaxed">
+                                    By submitting this complaint, you agree to our terms of service and acknowledge 
+                                    that all information provided is accurate to the best of your knowledge.
+                                </p>
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                {/* Mobile-optimized navigation */}
+                <div className={`p-4 sm:p-6 lg:p-8 border-t border-gray-100 bg-white ${
+                    isKeyboardVisible ? 'pb-safe-area-inset-bottom' : ''
+                }`}>
+                    <div className="flex justify-between items-center">
+                        <button 
+                            onClick={handleBack} 
+                            disabled={step === 1} 
+                            className="flex items-center space-x-2 px-4 sm:px-6 py-3 bg-gray-200 text-gray-700 font-medium rounded-lg hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors touch-manipulation"
+                            style={{ minHeight: '48px' }}
+                        >
+                            <ArrowLeft className="h-4 w-4" />
+                            <span className="hidden sm:inline">Back</span>
+                        </button>
+                        
+                        <div className="flex items-center space-x-2 text-sm text-gray-500">
+                            <span>Step {step} of 4</span>
+                            <div className="flex space-x-1">
+                                {[1, 2, 3, 4].map(s => (
+                                    <div 
+                                        key={s}
+                                        className={`w-2 h-2 rounded-full ${
+                                            step >= s ? 'bg-indigo-600' : 'bg-gray-300'
+                                        }`}
+                                    />
+                                ))}
+                            </div>
+                        </div>
+                        
+                        {step < 4 ? (
+                            <button 
+                                onClick={handleNext} 
+                                className="flex items-center space-x-2 px-4 sm:px-6 py-3 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition-colors touch-manipulation"
+                                style={{ minHeight: '48px' }}
+                            >
+                                <span>Next</span>
+                                <ChevronDown className="h-4 w-4 rotate-[-90deg]" />
+                            </button>
+                        ) : (
+                            <button 
+                                onClick={handleSubmit} 
+                                disabled={isSubmitting}
+                                className="flex items-center space-x-2 px-4 sm:px-6 py-3 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors touch-manipulation"
+                                style={{ minHeight: '48px' }}
+                            >
+                                {isSubmitting ? (
+                                    <>
+                                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                        <span>Submitting...</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <CheckCircle className="h-4 w-4" />
+                                        <span>Submit Complaint</span>
+                                    </>
+                                )}
+                            </button>
+                        )}
+                    </div>
                 </div>
             </div>
         </div>
     );
 };
-
 const TrackComplaintPage = ({ onTrack }) => {
     const [complaintId, setComplaintId] = useState('');
     const [identifier, setIdentifier] = useState('');

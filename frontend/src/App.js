@@ -4,7 +4,7 @@ import {
     Send, Phone, MessageCircle, ArrowLeft, Home, Plus, Eye, 
     Train, ChevronDown, Activity, Star, Bell, Settings,
     Calendar, User, Filter, Download, Share2, ExternalLink,
-    Zap, Shield, Globe, TrendingUp, Award, Heart, Mail,  
+    Zap, Shield, Globe, TrendingUp, Award, Heart, Mail,MessageSquare, BookOpen  
      
      
 } from 'lucide-react';
@@ -17,6 +17,9 @@ import {
 import GuidelinesPage from './GuidelinesPage';
 import StaffLoginPage from './staff';
 import logo from './logo.png';
+import railwayImage from './image.png';
+import railwayImageBW from './pexels-raj-photography-83911134-20402113.jpg';
+import railwayImage1 from './pexels-thangpu-paite-3365148-13110584.jpg';
 
 
 // At the top of App.js, add this import
@@ -578,11 +581,11 @@ const Header = ({ navigate, currentPath }) => {
                                 className="relative p-2 text-gray-600 hover:text-indigo-600 hover:bg-gray-50 rounded-lg transition-all duration-300"
                             >
                                 <Bell className="h-5 w-5" />
-                                {unreadCount > 0 && (
+                                {/* {unreadCount > 0 && (
                                     <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold animate-pulse">
                                         {unreadCount}
                                     </span>
-                                )}
+                                )} */}
                             </button>
 
                             {/* Notifications Dropdown */}
@@ -756,106 +759,267 @@ const Header = ({ navigate, currentPath }) => {
 
 
 const HomePage = ({ navigate }) => (
-    <div className="space-y-12">
-        <section className="text-center bg-white p-8 md:p-12 rounded-2xl shadow-sm border border-gray-100">
-            <div className="max-w-3xl mx-auto">
-                <div className="flex justify-center mb-6">
-                    <div className="p-3 bg-indigo-100 rounded-xl">
-                        <Train className="h-10 w-10 text-indigo-600" />
+    <div className="space-y-8">
+        {/* Hero Section with Colorful Railway Sunset Background */}
+        <section 
+            className="relative text-center rounded-2xl shadow-lg border border-gray-200 overflow-hidden"
+            style={{
+                backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url(${railwayImageBW })`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                backgroundRepeat: 'no-repeat',
+                minHeight: '500px'
+            }}
+        >
+            <div className="relative z-10 p-8 md:p-16 flex items-center justify-center min-h-[500px]">
+                <div className="max-w-4xl mx-auto">
+                    <div className="flex justify-center mb-6">
+                        <div className="p-3 bg-white bg-opacity-20 backdrop-blur-sm rounded-xl">
+                            <Train className="h-10 w-10 text-white" />
+                        </div>
                     </div>
-                </div>
-                <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-                    Your Concerns, <span className="text-indigo-600">Our Priority.</span>
-                </h2>
-                <p className="text-lg text-gray-600 mb-8 leading-relaxed">
-                    Transparent, efficient, and reliable complaint resolution for your journey with Indian Railways.
-                </p>
-                <div className="flex flex-col lg:flex-row justify-center gap-4 max-w-4xl mx-auto">
-                    <button 
-                        onClick={() => navigate('/submit')} 
-                        className="flex items-center justify-center gap-2 bg-indigo-600 text-white font-bold py-3 px-6 rounded-xl hover:bg-indigo-700 transition-all duration-300 shadow-md hover:shadow-lg"
-                    >
-                        <FileText size={20} />
-                        <span>File Complaint</span>
-                    </button>
-                    <button 
-                        onClick={() => navigate('/track')} 
-                        className="flex items-center justify-center gap-2 bg-gray-100 text-gray-800 font-bold py-3 px-6 rounded-xl hover:bg-gray-200 transition-all duration-300"
-                    >
-                        <Search size={20} />
-                        <span>Track Complaint</span>
-                    </button>
-                    <button 
-        onClick={() => navigate('/lookup')} 
-        className="flex items-center justify-center gap-2 bg-gray-100 text-gray-800 font-bold py-3 px-6 rounded-xl hover:bg-gray-200 transition-all duration-300"
-    >
-        <Eye size={20} />
-        <span>My Complaints</span>
-    </button>
+                    <h1 className="text-4xl md:text-5xl font-bold text-white mb-6 leading-tight">
+                        Your Concerns, <span className="text-yellow-300">Our Priority.</span>
+                    </h1>
+                    <p className="text-xl text-gray-100 mb-8 leading-relaxed max-w-3xl mx-auto">
+                        Transparent, efficient, and reliable complaint resolution for your journey with Indian Railways.
+                    </p>
+                    <div className="flex flex-col lg:flex-row justify-center gap-4 max-w-4xl mx-auto">
+                        <button 
+                            onClick={() => navigate('/submit')} 
+                            className="flex items-center justify-center gap-3 bg-blue-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-blue-700 transition-all duration-300 shadow-lg"
+                        >
+                            <FileText size={20} />
+                            <span>File Complaint</span>
+                        </button>
+                        <button 
+                            onClick={() => navigate('/track')} 
+                            className="flex items-center justify-center gap-3 bg-white bg-opacity-20 backdrop-blur-sm text-white font-bold py-3 px-6 rounded-lg hover:bg-opacity-30 transition-all duration-300 border border-white border-opacity-30"
+                        >
+                            <Search size={20} />
+                            <span>Track Complaint</span>
+                        </button>
+                        <button 
+                            onClick={() => navigate('/lookup')} 
+                            className="flex items-center justify-center gap-3 bg-white bg-opacity-20 backdrop-blur-sm text-white font-bold py-3 px-6 rounded-lg hover:bg-opacity-30 transition-all duration-300 border border-white border-opacity-30"
+                        >
+                            <Eye size={20} />
+                            <span>My Complaints</span>
+                        </button>
+                    </div>
+                    
+                    {/* Trust Indicators */}
+                    <div className="mt-10 grid grid-cols-2 md:grid-cols-4 gap-6 text-white">
+                        <div className="text-center">
+                            <div className="text-2xl font-bold">24/7</div>
+                            <div className="text-sm opacity-90">Support Available</div>
+                        </div>
+                        <div className="text-center">
+                            <div className="text-2xl font-bold">18 hrs</div>
+                            <div className="text-sm opacity-90">Avg Resolution</div>
+                        </div>
+                        <div className="text-center">
+                            <div className="text-2xl font-bold">94.2%</div>
+                            <div className="text-sm opacity-90">Satisfaction Rate</div>
+                        </div>
+                        <div className="text-center">
+                            <div className="text-2xl font-bold">2M+</div>
+                            <div className="text-sm opacity-90">Issues Resolved</div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </section>
 
-        <section className="bg-white p-8 md:p-12 rounded-2xl shadow-sm border border-gray-100">
-            <div className="text-center mb-8">
-                <h3 className="text-2xl font-bold text-gray-800 mb-2">How It Works</h3>
-                <p className="text-gray-600">Simple steps to resolve your concerns</p>
+        {/* How It Works Section - Clean Design */}
+        <section className="bg-white p-8 md:p-12 rounded-2xl shadow-sm border border-gray-200">
+            <div className="text-center mb-10">
+                <h3 className="text-3xl font-bold text-gray-800 mb-4">How It Works</h3>
+                <p className="text-lg text-gray-600">Simple steps to resolve your concerns</p>
             </div>
-            <div className="grid md:grid-cols-3 gap-6">
-                <HowItWorksCard 
-                    icon={<FileText size={28} />} 
-                    step="1" 
-                    title="Submit" 
-                    description="Use our guided form to file your grievance accurately with all necessary details." 
-                />
-                <HowItWorksCard 
-                    icon={<Search size={28} />} 
-                    step="2" 
-                    title="Track" 
-                    description="Watch your complaint's progress on a transparent timeline. No more black boxes." 
-                />
-                <HowItWorksCard 
-                    icon={<CheckCircle size={28} />} 
-                    step="3" 
-                    title="Resolve" 
-                    description="Receive clear updates, communicate with support, and get actionable resolutions." 
-                />
+            <div className="grid md:grid-cols-3 gap-8">
+                <div className="text-center p-6">
+                    <div className="flex justify-center mb-4">
+                        <div className="p-4 bg-blue-100 rounded-xl">
+                            <FileText className="h-8 w-8 text-blue-700" />
+                        </div>
+                    </div>
+                    <div className="text-sm font-bold text-blue-700 mb-2">STEP 1</div>
+                    <h4 className="text-xl font-bold text-gray-800 mb-3">Submit Your Complaint</h4>
+                    <p className="text-gray-600 leading-relaxed">
+                        Use our intelligent guided form to file your grievance accurately with all necessary details.
+                    </p>
+                </div>
+                <div className="text-center p-6">
+                    <div className="flex justify-center mb-4">
+                        <div className="p-4 bg-gray-100 rounded-xl">
+                            <Search className="h-8 w-8 text-gray-700" />
+                        </div>
+                    </div>
+                    <div className="text-sm font-bold text-gray-700 mb-2">STEP 2</div>
+                    <h4 className="text-xl font-bold text-gray-800 mb-3">Track Progress</h4>
+                    <p className="text-gray-600 leading-relaxed">
+                        Watch your complaint's progress on a transparent timeline with real-time updates.
+                    </p>
+                </div>
+                <div className="text-center p-6">
+                    <div className="flex justify-center mb-4">
+                        <div className="p-4 bg-green-100 rounded-xl">
+                            <CheckCircle className="h-8 w-8 text-green-700" />
+                        </div>
+                    </div>
+                    <div className="text-sm font-bold text-green-700 mb-2">STEP 3</div>
+                    <h4 className="text-xl font-bold text-gray-800 mb-3">Get Resolution</h4>
+                    <p className="text-gray-600 leading-relaxed">
+                        Receive clear updates and actionable resolutions to your concerns.
+                    </p>
+                </div>
             </div>
         </section>
         
-        <section className="bg-white p-8 md:p-12 rounded-2xl shadow-sm border border-gray-100">
-            <div className="text-center mb-8">
-                <h3 className="text-2xl font-bold text-gray-800 mb-2">System Performance</h3>
-                <p className="text-gray-600">Real-time insights into our service</p>
+        {/* System Performance Dashboard - Clean */}
+        <section className="bg-white p-8 md:p-12 rounded-2xl shadow-sm border border-gray-200">
+            <div className="text-center mb-10">
+                <h3 className="text-3xl font-bold text-gray-800 mb-4">System Performance</h3>
+                <p className="text-lg text-gray-600">Real-time insights into our service excellence</p>
             </div>
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <StatCard icon={<Shield size={24} />} label="System Status" value="Operational" color="green" />
-                <StatCard icon={<Clock size={24} />} label="Avg. Resolution" value="18 Hours" color="blue" />
-                <StatCard icon={<Award size={24} />} label="Resolved This Week" value="2,154" color="purple" />
-                <StatCard icon={<Heart size={24} />} label="Satisfaction Rate" value="94.2%" color="orange" trend="+3.1%" />
+                <div className="bg-gray-50 p-6 rounded-xl border border-gray-200 text-center">
+                    <div className="flex justify-center mb-3">
+                        <Shield className="h-8 w-8 text-green-600" />
+                    </div>
+                    <div className="text-2xl font-bold text-gray-800">Operational</div>
+                    <div className="text-sm text-gray-600">System Status</div>
+                </div>
+                <div className="bg-gray-50 p-6 rounded-xl border border-gray-200 text-center">
+                    <div className="flex justify-center mb-3">
+                        <Clock className="h-8 w-8 text-blue-600" />
+                    </div>
+                    <div className="text-2xl font-bold text-gray-800">18 Hours</div>
+                    <div className="text-sm text-gray-600">Avg. Resolution</div>
+                </div>
+                <div className="bg-gray-50 p-6 rounded-xl border border-gray-200 text-center">
+                    <div className="flex justify-center mb-3">
+                        <Award className="h-8 w-8 text-gray-600" />
+                    </div>
+                    <div className="text-2xl font-bold text-gray-800">2,154</div>
+                    <div className="text-sm text-gray-600">Resolved This Week</div>
+                </div>
+                <div className="bg-gray-50 p-6 rounded-xl border border-gray-200 text-center">
+                    <div className="flex justify-center mb-3">
+                        <Heart className="h-8 w-8 text-gray-600" />
+                    </div>
+                    <div className="text-2xl font-bold text-gray-800">94.2%</div>
+                    <div className="text-sm text-gray-600">Satisfaction Rate</div>
+                </div>
             </div>
         </section>
 
-        <section className="bg-indigo-600 p-8 md:p-12 rounded-2xl shadow-sm text-white">
-            <div className="text-center max-w-2xl mx-auto">
-                <h3 className="text-2xl font-bold mb-4">Need Immediate Assistance?</h3>
-                <p className="text-indigo-100 mb-6 leading-relaxed">
-                    Our 24/7 support team is always ready to help with urgent matters.
+        {/* Features Showcase - Clean */}
+        <section className="bg-white p-8 md:p-12 rounded-2xl shadow-sm border border-gray-200">
+            <div className="text-center mb-10">
+                <h3 className="text-3xl font-bold text-gray-800 mb-4">Why Choose RailCare?</h3>
+                <p className="text-lg text-gray-600">Advanced features for better complaint resolution</p>
+            </div>
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="p-6 border border-gray-200 rounded-xl hover:shadow-md transition-all duration-300">
+                    <div className="p-3 bg-blue-100 rounded-lg w-fit mb-4">
+                        <Zap className="h-6 w-6 text-blue-700" />
+                    </div>
+                    <h4 className="text-lg font-bold text-gray-800 mb-2">AI-Powered Classification</h4>
+                    <p className="text-gray-600 text-sm">Smart categorization ensures your complaint reaches the right department instantly.</p>
+                </div>
+                <div className="p-6 border border-gray-200 rounded-xl hover:shadow-md transition-all duration-300">
+                    <div className="p-3 bg-gray-100 rounded-lg w-fit mb-4">
+                        <Globe className="h-6 w-6 text-gray-700" />
+                    </div>
+                    <h4 className="text-lg font-bold text-gray-800 mb-2">Multi-Language Support</h4>
+                    <p className="text-gray-600 text-sm">File complaints in your preferred language for better communication.</p>
+                </div>
+                <div className="p-6 border border-gray-200 rounded-xl hover:shadow-md transition-all duration-300">
+                    <div className="p-3 bg-green-100 rounded-lg w-fit mb-4">
+                        <TrendingUp className="h-6 w-6 text-green-700" />
+                    </div>
+                    <h4 className="text-lg font-bold text-gray-800 mb-2">Real-Time Analytics</h4>
+                    <p className="text-gray-600 text-sm">Track resolution patterns and system performance transparently.</p>
+                </div>
+            </div>
+        </section>
+
+        {/* Emergency Support Section - B&W Railway Background */}
+        <section 
+            className="relative p-8 md:p-12 rounded-2xl shadow-lg text-white overflow-hidden"
+            style={{
+                backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url(${railwayImage1 })`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                backgroundRepeat: 'no-repeat'
+            }}
+        >
+            <div className="relative z-10 text-center max-w-3xl mx-auto">
+                <div className="flex justify-center mb-6">
+                    <div className="p-4 bg-white bg-opacity-20 backdrop-blur-sm rounded-xl">
+                        <Phone className="h-10 w-10 text-white" />
+                    </div>
+                </div>
+                <h3 className="text-3xl font-bold mb-4">Need Immediate Assistance?</h3>
+                <p className="text-red-100 mb-8 text-lg leading-relaxed">
+                    Our 24/7 emergency support team is always ready to help with urgent safety matters and critical situations.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-6 justify-center">
+                    <div className="flex items-center justify-center space-x-3 bg-white bg-opacity-20 backdrop-blur-sm px-6 py-4 rounded-xl border border-white border-opacity-30">
+                        <Phone className="h-6 w-6" />
+                        <div className="text-left">
+                            <div className="font-bold text-lg">Emergency: 139</div>
+                            <div className="text-red-100 text-sm">For critical situations</div>
+                        </div>
+                    </div>
+                    <div className="flex items-center justify-center space-x-3 bg-white bg-opacity-20 backdrop-blur-sm px-6 py-4 rounded-xl border border-white border-opacity-30">
+                        <Globe className="h-6 w-6" />
+                        <div className="text-left">
+                            <div className="font-bold text-lg">24/7 Online Support</div>
+                            <div className="text-red-100 text-sm">Always available</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        {/* Call to Action Section - B&W Railway Background */}
+        <section 
+            className="relative p-8 md:p-12 rounded-2xl shadow-lg text-white overflow-hidden"
+            style={{
+                backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url(${railwayImage })`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                backgroundRepeat: 'no-repeat'
+            }}
+        >
+            <div className="relative z-10 text-center max-w-3xl mx-auto">
+                <h3 className="text-3xl font-bold mb-4">Ready to Get Started?</h3>
+                <p className="text-blue-100 mb-8 text-lg leading-relaxed">
+                    Join millions of passengers who trust RailCare for transparent and efficient complaint resolution.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                    <div className="flex items-center justify-center space-x-2 bg-white bg-opacity-10 px-4 py-2 rounded-lg">
-                        <Phone className="h-5 w-5" />
-                        <span>Emergency: 139</span>
-                    </div>
-                    <div className="flex items-center justify-center space-x-2 bg-white bg-opacity-10 px-4 py-2 rounded-lg">
-                        <Globe className="h-5 w-5" />
-                        <span>24/7 Online Support</span>
-                    </div>
+                    <button 
+                        onClick={() => navigate('/submit')} 
+                        className="bg-white text-blue-700 font-bold py-3 px-6 rounded-lg hover:bg-gray-100 transition-all duration-300 shadow-lg"
+                    >
+                        File Your First Complaint
+                    </button>
+                    <button 
+                        onClick={() => navigate('/guidelines')} 
+                        className="bg-white bg-opacity-20 backdrop-blur-sm text-white font-bold py-3 px-6 rounded-lg hover:bg-opacity-30 transition-all duration-300 border border-white border-opacity-30"
+                    >
+                        Read Guidelines
+                    </button>
                 </div>
             </div>
         </section>
     </div>
 );
+
+
 
 const ComplaintLookupPage = ({ onLookup }) => {
     const [email, setEmail] = useState('');

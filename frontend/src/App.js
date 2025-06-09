@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef  } from 'react';
 import { 
     FileText, Search, Clock, CheckCircle, AlertTriangle, Upload, 
     Send, Phone, MessageCircle, ArrowLeft, Home, Plus, Eye, 
     Train, ChevronDown, Activity, Star, Bell, Settings,
     Calendar, User, Filter, Download, Share2, ExternalLink,
-    Zap, Shield, Globe, TrendingUp, Award, Heart, Mail,MessageSquare, BookOpen  
+    Zap, Shield, Globe, TrendingUp, Award, Heart, Mail,MessageSquare, BookOpen , X 
      
      
 } from 'lucide-react';
@@ -483,6 +483,7 @@ const Header = ({ navigate, currentPath }) => {
     ]);
     const [showNotifications, setShowNotifications] = useState(false);
     const [showUserMenu, setShowUserMenu] = useState(false);
+    const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
 
     const unreadCount = notifications.filter(n => n.unread).length;
 
@@ -497,34 +498,63 @@ const Header = ({ navigate, currentPath }) => {
         return currentPath === path;
     };
 
+    // Close dropdowns when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (!event.target.closest('.dropdown-container')) {
+                setShowNotifications(false);
+                setShowUserMenu(false);
+            }
+        };
+        document.addEventListener('click', handleClickOutside);
+        return () => document.removeEventListener('click', handleClickOutside);
+    }, []);
+
+    // Close mobile menu on route change
+    useEffect(() => {
+        setIsMobileMenuOpen(false);
+        setIsMobileSearchOpen(false);
+    }, [currentPath]);
+
+    // Prevent body scroll when mobile menu is open
+    useEffect(() => {
+        if (isMobileMenuOpen) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = 'unset';
+        }
+        return () => {
+            document.body.style.overflow = 'unset';
+        };
+    }, [isMobileMenuOpen]);
+
     return (
         <header className="bg-white shadow-lg sticky top-0 z-50 border-b border-gray-200">
-            <nav className="container mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="flex justify-between items-center h-16">
-                    {/* Logo and Brand */}
-                    {/* Updated Logo and Brand - Removed border and green dot */}
-<div 
-    className="flex items-center space-x-3 cursor-pointer group" 
-    onClick={() => navigate('/')}
->
-    <div className="relative">
-        <img 
-            src={logo}
-            alt="RailCare Logo" 
-            className="h-10 w-10 object-contain group-hover:scale-105 transition-all duration-300"
-        />
-        {/* Green dot removed */}
-    </div>
-    <div className="hidden sm:block">
-        <h1 className="text-xl font-bold text-gray-800 group-hover:text-indigo-600 transition-colors">
-            RailCare
-        </h1>
-        <p className="text-xs text-gray-500 font-medium">Smart Complaint Resolution Platform </p>
-    </div>
-</div>
+            <nav className="container mx-auto px-3 sm:px-4 lg:px-8">
+                <div className="flex justify-between items-center h-14 sm:h-16">
+                    {/* Logo and Brand - Mobile Optimized */}
+                    <div 
+                        className="flex items-center space-x-2 sm:space-x-3 cursor-pointer group min-w-0 flex-shrink-0" 
+                        onClick={() => navigate('/')}
+                    >
+                        <div className="relative flex-shrink-0">
+                            <img 
+                                src={logo}
+                                alt="RailCare Logo" 
+                                className="h-8 w-8 sm:h-10 sm:w-10 object-contain group-hover:scale-105 transition-all duration-300"
+                            />
+                        </div>
+                        <div className="min-w-0">
+                            <h1 className="text-lg sm:text-xl font-bold text-gray-800 group-hover:text-indigo-600 transition-colors truncate">
+                                RailCare
+                            </h1>
+                            <p className="text-xs text-gray-500 font-medium hidden xs:block sm:block truncate">
+                                Smart Complaint Resolution Platform
+                            </p>
+                        </div>
+                    </div>
 
-
-                    {/* Desktop Navigation - Simplified */}
+                    {/* Desktop Navigation - Preserved */}
                     <div className="hidden lg:flex items-center space-x-1">
                         {navItems.map(({ path, label, icon: Icon }) => (
                             <button
@@ -542,72 +572,93 @@ const Header = ({ navigate, currentPath }) => {
                         ))}
                     </div>
 
-                    {/* Right Side Actions */}
-                    <div className="flex items-center space-x-3">
-                        {/* Search Bar */}
-                        <div className="hidden md:flex items-center bg-gray-100 rounded-lg px-3 py-2 w-64">
-                            <Search className="h-4 w-4 text-gray-400 mr-2" />
+                    {/* Right Side Actions - Mobile Optimized */}
+                    <div className="flex items-center space-x-1 sm:space-x-2 lg:space-x-3">
+                        {/* Mobile Search Toggle */}
+                        <button
+                            onClick={() => setIsMobileSearchOpen(!isMobileSearchOpen)}
+                            className="md:hidden p-2 text-gray-600 hover:text-indigo-600 hover:bg-gray-50 rounded-lg transition-all duration-300 flex-shrink-0"
+                            aria-label="Toggle search"
+                        >
+                            <Search className="h-4 w-4 sm:h-5 sm:w-5" />
+                        </button>
+
+                        {/* Desktop Search Bar - Preserved */}
+                        <div className="hidden md:flex items-center bg-gray-100 rounded-lg px-3 py-2 w-48 lg:w-64">
+                            <Search className="h-4 w-4 text-gray-400 mr-2 flex-shrink-0" />
                             <input
                                 type="text"
                                 placeholder="Search complaints..."
-                                className="bg-transparent border-0 focus:ring-0 text-sm flex-1 text-gray-700 placeholder-gray-500"
+                                className="bg-transparent border-0 focus:ring-0 text-sm flex-1 text-gray-700 placeholder-gray-500 min-w-0"
                             />
                         </div>
 
-                        {/* Staff Login Button */}
-                        {/* Updated Staff/User Login Button */}
-{/* Updated Staff/User Login Button */}
-<button
-    onClick={() => navigate(currentPath === '/staff-login' ? '/' : '/staff-login')}
-    className="hidden md:flex items-center space-x-2 px-4 py-2 bg-orange-100 text-orange-700 hover:bg-orange-200 rounded-lg font-medium transition-all duration-300 border border-orange-200"
->
-    {currentPath === '/staff-login' ? (
-        <User className="h-4 w-4" />
-    ) : (
-        <Shield className="h-4 w-4" />
-    )}
-    <span className="text-sm">
-        {currentPath === '/staff-login' ? 'User Login' : 'Staff Login'}
-    </span>
-</button>
+                        {/* Staff/User Login Button - Mobile Optimized */}
+                        <button
+                            onClick={() => navigate(currentPath === '/staff-login' ? '/' : '/staff-login')}
+                            className="hidden sm:flex items-center space-x-1 lg:space-x-2 px-2 sm:px-3 lg:px-4 py-2 bg-orange-100 text-orange-700 hover:bg-orange-200 rounded-lg font-medium transition-all duration-300 border border-orange-200 flex-shrink-0"
+                        >
+                            {currentPath === '/staff-login' ? (
+                                <User className="h-3 w-3 sm:h-4 sm:w-4" />
+                            ) : (
+                                <Shield className="h-3 w-3 sm:h-4 sm:w-4" />
+                            )}
+                            <span className="text-xs sm:text-sm whitespace-nowrap">
+                                {currentPath === '/staff-login' ? 'User' : 'Staff'}
+                            </span>
+                            <span className="text-xs sm:text-sm hidden lg:inline">
+                                Login
+                            </span>
+                        </button>
 
+                        {/* Mobile Staff/User Login Button - Icon Only */}
+                        <button
+                            onClick={() => navigate(currentPath === '/staff-login' ? '/' : '/staff-login')}
+                            className="sm:hidden p-2 bg-orange-100 text-orange-700 hover:bg-orange-200 rounded-lg transition-all duration-300 border border-orange-200 flex-shrink-0"
+                            aria-label={currentPath === '/staff-login' ? 'User Login' : 'Staff Login'}
+                        >
+                            {currentPath === '/staff-login' ? (
+                                <User className="h-4 w-4" />
+                            ) : (
+                                <Shield className="h-4 w-4" />
+                            )}
+                        </button>
 
-
-
-                        {/* Notifications */}
-                        <div className="relative">
+                        {/* Notifications - Mobile Optimized */}
+                        <div className="relative dropdown-container">
                             <button
                                 onClick={() => setShowNotifications(!showNotifications)}
-                                className="relative p-2 text-gray-600 hover:text-indigo-600 hover:bg-gray-50 rounded-lg transition-all duration-300"
+                                className="relative p-2 text-gray-600 hover:text-indigo-600 hover:bg-gray-50 rounded-lg transition-all duration-300 flex-shrink-0"
+                                aria-label="Notifications"
                             >
-                                <Bell className="h-5 w-5" />
-                                {/* {unreadCount > 0 && (
-                                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold animate-pulse">
-                                        {unreadCount}
+                                <Bell className="h-4 w-4 sm:h-5 sm:w-5" />
+                                {unreadCount > 0 && (
+                                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 sm:h-5 sm:w-5 flex items-center justify-center font-bold animate-pulse min-w-0">
+                                        <span className="text-xs leading-none">{unreadCount}</span>
                                     </span>
-                                )} */}
+                                )}
                             </button>
 
-                            {/* Notifications Dropdown */}
+                            {/* Notifications Dropdown - Mobile Optimized */}
                             {showNotifications && (
-                                <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-2xl border border-gray-200 z-50">
-                                    <div className="p-4 border-b border-gray-100">
-                                        <h3 className="font-bold text-gray-800 flex items-center justify-between">
-                                            Notifications
-                                            <span className="text-xs bg-indigo-100 text-indigo-700 px-2 py-1 rounded-full">
+                                <div className="absolute right-0 mt-2 w-72 sm:w-80 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 max-w-[calc(100vw-2rem)] mr-2 sm:mr-0">
+                                    <div className="p-3 sm:p-4 border-b border-gray-100">
+                                        <h3 className="font-bold text-gray-800 flex items-center justify-between text-sm sm:text-base">
+                                            <span className="truncate">Notifications</span>
+                                            <span className="text-xs bg-indigo-100 text-indigo-700 px-2 py-1 rounded-full ml-2 flex-shrink-0">
                                                 {unreadCount} new
                                             </span>
                                         </h3>
                                     </div>
-                                    <div className="max-h-64 overflow-y-auto">
+                                    <div className="max-h-56 sm:max-h-64 overflow-y-auto">
                                         {notifications.map(notification => (
                                             <div
                                                 key={notification.id}
-                                                className={`p-3 border-b border-gray-50 hover:bg-gray-50 transition-colors ${
+                                                className={`p-3 border-b border-gray-50 hover:bg-gray-50 transition-colors cursor-pointer ${
                                                     notification.unread ? 'bg-blue-50' : ''
                                                 }`}
                                             >
-                                                <p className="text-sm text-gray-800 font-medium">
+                                                <p className="text-sm text-gray-800 font-medium leading-snug">
                                                     {notification.message}
                                                 </p>
                                                 <p className="text-xs text-gray-500 mt-1">{notification.time}</p>
@@ -615,7 +666,7 @@ const Header = ({ navigate, currentPath }) => {
                                         ))}
                                     </div>
                                     <div className="p-3 border-t border-gray-100">
-                                        <button className="text-sm text-indigo-600 hover:text-indigo-800 font-medium">
+                                        <button className="text-sm text-indigo-600 hover:text-indigo-800 font-medium w-full text-left">
                                             View all notifications
                                         </button>
                                     </div>
@@ -623,401 +674,564 @@ const Header = ({ navigate, currentPath }) => {
                             )}
                         </div>
 
-                        {/* User Menu */}
-                        <div className="relative">
+                        {/* User Menu - Mobile Optimized */}
+                        <div className="relative dropdown-container">
                             <button
                                 onClick={() => setShowUserMenu(!showUserMenu)}
-                                className="flex items-center space-x-2 p-2 text-gray-600 hover:text-indigo-600 hover:bg-gray-50 rounded-lg transition-all duration-300"
+                                className="flex items-center space-x-1 sm:space-x-2 p-2 text-gray-600 hover:text-indigo-600 hover:bg-gray-50 rounded-lg transition-all duration-300 flex-shrink-0"
+                                aria-label="User menu"
                             >
-                                <div className="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center">
-                                    <User className="h-4 w-4 text-indigo-600" />
+                                <div className="w-6 h-6 sm:w-8 sm:h-8 bg-indigo-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                    <User className="h-3 w-3 sm:h-4 sm:w-4 text-indigo-600" />
                                 </div>
-                                <ChevronDown className="h-4 w-4 hidden sm:block" />
+                                <ChevronDown className="h-3 w-3 sm:h-4 sm:w-4 hidden sm:block" />
                             </button>
 
-                            {/* User Dropdown */}
+                            {/* User Dropdown - Mobile Optimized */}
                             {showUserMenu && (
-                                <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-2xl border border-gray-200 z-50">
+                                <div className="absolute right-0 mt-2 w-44 sm:w-48 bg-white rounded-xl shadow-2xl border border-gray-200 z-50">
                                     <div className="p-3 border-b border-gray-100">
-                                        <p className="font-medium text-gray-800">Guest User</p>
-                                        <p className="text-xs text-gray-500">user@example.com</p>
+                                        <p className="font-medium text-gray-800 text-sm truncate">Guest User</p>
+                                        <p className="text-xs text-gray-500 truncate">user@example.com</p>
                                     </div>
                                     <div className="py-2">
                                         <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-2">
-                                            <Settings className="h-4 w-4" />
-                                            <span>Settings</span>
+                                            <Settings className="h-4 w-4 flex-shrink-0" />
+                                            <span className="truncate">Settings</span>
                                         </button>
                                         <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-2">
-                                            <ExternalLink className="h-4 w-4" />
-                                            <span>Help & Support</span>
+                                            <ExternalLink className="h-4 w-4 flex-shrink-0" />
+                                            <span className="truncate">Help & Support</span>
                                         </button>
                                     </div>
                                 </div>
                             )}
                         </div>
 
-                        {/* Mobile Menu Button */}
+                        {/* Mobile Menu Button - Enhanced */}
                         <button
                             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                            className="lg:hidden p-2 text-gray-600 hover:text-indigo-600 hover:bg-gray-50 rounded-lg transition-all duration-300"
+                            className="lg:hidden p-2 text-gray-600 hover:text-indigo-600 hover:bg-gray-50 rounded-lg transition-all duration-300 flex-shrink-0"
+                            aria-label="Toggle menu"
                         >
                             {isMobileMenuOpen ? (
                                 <div className="h-5 w-5 relative">
                                     <div className="absolute inset-0 flex items-center justify-center">
-                                        <div className="w-4 h-0.5 bg-current transform rotate-45"></div>
-                                        <div className="w-4 h-0.5 bg-current transform -rotate-45"></div>
+                                        <div className="w-4 h-0.5 bg-current transform rotate-45 absolute"></div>
+                                        <div className="w-4 h-0.5 bg-current transform -rotate-45 absolute"></div>
                                     </div>
                                 </div>
                             ) : (
                                 <div className="h-5 w-5 flex flex-col justify-center space-y-1">
-                                    <div className="w-5 h-0.5 bg-current"></div>
-                                    <div className="w-5 h-0.5 bg-current"></div>
-                                    <div className="w-5 h-0.5 bg-current"></div>
+                                    <div className="w-5 h-0.5 bg-current transition-all duration-300"></div>
+                                    <div className="w-5 h-0.5 bg-current transition-all duration-300"></div>
+                                    <div className="w-5 h-0.5 bg-current transition-all duration-300"></div>
                                 </div>
                             )}
                         </button>
                     </div>
                 </div>
 
-                {/* Mobile Navigation Menu */}
-                {isMobileMenuOpen && (
-                    <div className="lg:hidden border-t border-gray-200 bg-white">
-                        <div className="py-4 space-y-2">
-                            {/* Mobile Search */}
-                            <div className="px-4 mb-4">
-                                <div className="flex items-center bg-gray-100 rounded-lg px-3 py-2">
-                                    <Search className="h-4 w-4 text-gray-400 mr-2" />
-                                    <input
-                                        type="text"
-                                        placeholder="Search complaints..."
-                                        className="bg-transparent border-0 focus:ring-0 text-sm flex-1 text-gray-700 placeholder-gray-500"
-                                    />
-                                </div>
-                            </div>
-
-                            {/* Mobile Navigation Items */}
-                            {navItems.map(({ path, label, icon: Icon }) => (
-                                <button
-                                    key={path}
-                                    onClick={() => {
-                                        navigate(path);
-                                        setIsMobileMenuOpen(false);
-                                    }}
-                                    className={`w-full flex items-center space-x-3 px-4 py-3 text-left transition-all duration-300 ${
-                                        isActivePath(path)
-                                            ? 'bg-indigo-50 text-indigo-700 border-r-4 border-indigo-500'
-                                            : 'text-gray-600 hover:bg-gray-50 hover:text-indigo-600'
-                                    }`}
-                                >
-                                    <Icon className="h-5 w-5" />
-                                    <span className="font-medium">{label}</span>
-                                </button>
-                            ))}
-
-                            {/* Mobile Staff Login */}
-                            {/* Updated Mobile Staff/User Login */}
-<button
-    onClick={() => {
-        if (currentPath === '/staff-login') {
-            navigate('/');
-        } else {
-            navigate('/staff-login');
-        }
-        setIsMobileMenuOpen(false);
-    }}
-    className="w-full flex items-center space-x-3 px-4 py-3 text-left text-orange-700 hover:bg-orange-50 transition-all duration-300"
->
-    {currentPath === '/staff-login' ? (
-        <User className="h-5 w-5" />
-    ) : (
-        <Shield className="h-5 w-5" />
-    )}
-    <span className="font-medium">
-        {currentPath === '/staff-login' ? 'User Login' : 'Staff Login'}
-    </span>
-</button>
-
-
-                            {/* Emergency Contact in Mobile */}
-                            <div className="mx-4 mt-4 p-3 bg-red-50 rounded-lg border border-red-200">
-                                <div className="flex items-center space-x-2 text-red-700">
-                                    <Phone className="h-4 w-4" />
-                                    <span className="text-sm font-bold">Emergency: 139</span>
-                                </div>
-                            </div>
+                {/* Mobile Search Bar - Collapsible */}
+                {isMobileSearchOpen && (
+                    <div className="md:hidden border-t border-gray-200 py-3 px-1 bg-gray-50">
+                        <div className="flex items-center bg-white rounded-lg px-3 py-2 border border-gray-200 shadow-sm">
+                            <Search className="h-4 w-4 text-gray-400 mr-2 flex-shrink-0" />
+                            <input
+                                type="text"
+                                placeholder="Search complaints..."
+                                className="bg-transparent border-0 focus:ring-0 text-sm flex-1 text-gray-700 placeholder-gray-500 min-w-0"
+                                autoFocus
+                            />
+                            <button
+                                onClick={() => setIsMobileSearchOpen(false)}
+                                className="ml-2 p-1 text-gray-400 hover:text-gray-600 flex-shrink-0"
+                                aria-label="Close search"
+                            >
+                                <X className="h-4 w-4" />
+                            </button>
                         </div>
                     </div>
                 )}
-            </nav>
 
-            {/* Status Bar */}
-            
+                {/* Mobile Navigation Menu - Enhanced */}
+                {isMobileMenuOpen && (
+                    <>
+                        {/* Backdrop */}
+                        <div 
+                            className="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-40"
+                            onClick={() => setIsMobileMenuOpen(false)}
+                        />
+                        
+                        {/* Mobile Menu */}
+                        <div className="lg:hidden fixed top-14 sm:top-16 left-0 right-0 bottom-0 bg-white z-50 overflow-y-auto">
+                            <div className="py-4 space-y-1">
+                                {/* Mobile Navigation Items */}
+                                {navItems.map(({ path, label, icon: Icon }) => (
+                                    <button
+                                        key={path}
+                                        onClick={() => {
+                                            navigate(path);
+                                            setIsMobileMenuOpen(false);
+                                        }}
+                                        className={`w-full flex items-center space-x-3 px-4 py-4 text-left transition-all duration-300 ${
+                                            isActivePath(path)
+                                                ? 'bg-indigo-50 text-indigo-700 border-r-4 border-indigo-500'
+                                                : 'text-gray-600 hover:bg-gray-50 hover:text-indigo-600 active:bg-gray-100'
+                                        }`}
+                                    >
+                                        <Icon className="h-5 w-5 flex-shrink-0" />
+                                        <span className="font-medium text-base">{label}</span>
+                                    </button>
+                                ))}
+
+                                {/* Divider */}
+                                <div className="mx-4 my-4 border-t border-gray-200"></div>
+
+                                {/* Mobile Staff/User Login */}
+                                <button
+                                    onClick={() => {
+                                        if (currentPath === '/staff-login') {
+                                            navigate('/');
+                                        } else {
+                                            navigate('/staff-login');
+                                        }
+                                        setIsMobileMenuOpen(false);
+                                    }}
+                                    className="w-full flex items-center space-x-3 px-4 py-4 text-left text-orange-700 hover:bg-orange-50 active:bg-orange-100 transition-all duration-300"
+                                >
+                                    {currentPath === '/staff-login' ? (
+                                        <User className="h-5 w-5 flex-shrink-0" />
+                                    ) : (
+                                        <Shield className="h-5 w-5 flex-shrink-0" />
+                                    )}
+                                    <span className="font-medium text-base">
+                                        {currentPath === '/staff-login' ? 'User Login' : 'Staff Login'}
+                                    </span>
+                                </button>
+
+                                {/* Mobile User Profile Section */}
+                                <div className="mx-4 mt-6 p-4 bg-gray-50 rounded-lg">
+                                    <div className="flex items-center space-x-3 mb-3">
+                                        <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center">
+                                            <User className="h-5 w-5 text-indigo-600" />
+                                        </div>
+                                        <div className="min-w-0 flex-1">
+                                            <p className="font-medium text-gray-800 text-sm truncate">Guest User</p>
+                                            <p className="text-xs text-gray-500 truncate">user@example.com</p>
+                                        </div>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <button className="w-full text-left flex items-center space-x-2 px-3 py-2 text-sm text-gray-600 hover:bg-white hover:text-indigo-600 rounded-md transition-all duration-300">
+                                            <Settings className="h-4 w-4 flex-shrink-0" />
+                                            <span>Settings</span>
+                                        </button>
+                                        <button className="w-full text-left flex items-center space-x-2 px-3 py-2 text-sm text-gray-600 hover:bg-white hover:text-indigo-600 rounded-md transition-all duration-300">
+                                            <ExternalLink className="h-4 w-4 flex-shrink-0" />
+                                            <span>Help & Support</span>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Emergency Contact in Mobile - Enhanced */}
+                                <div className="mx-4 mt-6 p-4 bg-red-50 rounded-lg border border-red-200">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center space-x-2 text-red-700">
+                                            <Phone className="h-5 w-5 flex-shrink-0" />
+                                            <div>
+                                                <span className="text-sm font-bold">Emergency: 139</span>
+                                                <p className="text-xs text-red-600 mt-1">24/7 Railway Emergency Helpline</p>
+                                            </div>
+                                        </div>
+                                        <button 
+                                            className="px-3 py-1 bg-red-600 text-white rounded-md text-sm font-medium hover:bg-red-700 transition-colors"
+                                            onClick={() => window.location.href = 'tel:139'}
+                                        >
+                                            Call
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Notifications in Mobile Menu */}
+                                {unreadCount > 0 && (
+                                    <div className="mx-4 mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center space-x-2 text-blue-700">
+                                                <Bell className="h-4 w-4 flex-shrink-0" />
+                                                <span className="text-sm font-medium">{unreadCount} New Notifications</span>
+                                            </div>
+                                            <button 
+                                                className="text-blue-600 text-sm font-medium hover:text-blue-800"
+                                                onClick={() => {
+                                                    setShowNotifications(true);
+                                                    setIsMobileMenuOpen(false);
+                                                }}
+                                            >
+                                                View
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Bottom Padding for Safe Area */}
+                                <div className="h-8"></div>
+                            </div>
+                        </div>
+                    </>
+                )}
+            </nav>
         </header>
     );
 };
 
 
+const HomePage = ({ navigate }) => {
+    const [isVisible, setIsVisible] = useState(false);
+    const [activeSection, setActiveSection] = useState(null);
 
-const HomePage = ({ navigate }) => (
-    <div className="space-y-8">
-        {/* Hero Section with Colorful Railway Sunset Background */}
-        <section 
-            className="relative text-center rounded-2xl shadow-lg border border-gray-200 overflow-hidden"
-            style={{
-                backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url(${railwayImageBW })`,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-                backgroundRepeat: 'no-repeat',
-                minHeight: '500px'
-            }}
-        >
-            <div className="relative z-10 p-8 md:p-16 flex items-center justify-center min-h-[500px]">
-                <div className="max-w-4xl mx-auto">
-                    <div className="flex justify-center mb-6">
-                        <div className="p-3 bg-white bg-opacity-20 backdrop-blur-sm rounded-xl">
-                            <Train className="h-10 w-10 text-white" />
+    // Intersection Observer for animations
+    useEffect(() => {
+        const observer = new IntersectionObserver(
+            (entries) => {
+                entries.forEach((entry) => {
+                    if (entry.isIntersecting) {
+                        setActiveSection(entry.target.id);
+                    }
+                });
+            },
+            { threshold: 0.1, rootMargin: '-50px 0px' }
+        );
+
+        const sections = document.querySelectorAll('[data-section]');
+        sections.forEach((section) => observer.observe(section));
+
+        return () => observer.disconnect();
+    }, []);
+
+    // Trigger initial animation
+    useEffect(() => {
+        const timer = setTimeout(() => setIsVisible(true), 100);
+        return () => clearTimeout(timer);
+    }, []);
+
+    return (
+        <div className="space-y-6 sm:space-y-8 px-2 sm:px-0">
+            {/* Hero Section with Mobile-Optimized Railway Background */}
+            <section 
+                id="hero"
+                data-section
+                className={`relative text-center rounded-lg sm:rounded-2xl shadow-lg border border-gray-200 overflow-hidden transition-all duration-700 ${
+                    isVisible ? 'opacity-100 transform translate-y-0' : 'opacity-0 transform translate-y-4'
+                }`}
+                style={{
+                    backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url(${railwayImageBW})`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                    backgroundRepeat: 'no-repeat',
+                    minHeight: '400px'
+                }}
+            >
+                <div className="relative z-10 p-4 sm:p-6 md:p-8 lg:p-16 flex items-center justify-center min-h-[400px] sm:min-h-[500px]">
+                    <div className="max-w-4xl mx-auto w-full">
+                        <div className="flex justify-center mb-4 sm:mb-6">
+                            <div className="p-2 sm:p-3 bg-white bg-opacity-20 backdrop-blur-sm rounded-lg sm:rounded-xl">
+                                <Train className="h-6 w-6 sm:h-8 sm:w-8 md:h-10 md:w-10 text-white" />
+                            </div>
+                        </div>
+                        
+                        <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4 sm:mb-6 leading-tight px-2">
+                            Your Concerns, <span className="text-yellow-300 block sm:inline">Our Priority.</span>
+                        </h1>
+                        
+                        <p className="text-base sm:text-lg md:text-xl text-gray-100 mb-6 sm:mb-8 leading-relaxed max-w-3xl mx-auto px-2">
+                            Transparent, efficient, and reliable complaint resolution for your journey with Indian Railways.
+                        </p>
+                        
+                        {/* Mobile-Optimized Action Buttons */}
+                        <div className="flex flex-col sm:flex-row lg:flex-row justify-center gap-3 sm:gap-4 max-w-4xl mx-auto px-2">
+                            <button 
+                                onClick={() => navigate('/submit')} 
+                                className="flex items-center justify-center gap-2 sm:gap-3 bg-blue-600 text-white font-bold py-3 sm:py-3 px-4 sm:px-6 rounded-lg hover:bg-blue-700 active:bg-blue-800 transition-all duration-300 shadow-lg text-sm sm:text-base touch-manipulation"
+                            >
+                                <FileText size={16} className="sm:w-5 sm:h-5" />
+                                <span>File Complaint</span>
+                            </button>
+                            <button 
+                                onClick={() => navigate('/track')} 
+                                className="flex items-center justify-center gap-2 sm:gap-3 bg-white bg-opacity-20 backdrop-blur-sm text-white font-bold py-3 sm:py-3 px-4 sm:px-6 rounded-lg hover:bg-opacity-30 active:bg-opacity-40 transition-all duration-300 border border-white border-opacity-30 text-sm sm:text-base touch-manipulation"
+                            >
+                                <Search size={16} className="sm:w-5 sm:h-5" />
+                                <span>Track Complaint</span>
+                            </button>
+                            <button 
+                                onClick={() => navigate('/lookup')} 
+                                className="flex items-center justify-center gap-2 sm:gap-3 bg-white bg-opacity-20 backdrop-blur-sm text-white font-bold py-3 sm:py-3 px-4 sm:px-6 rounded-lg hover:bg-opacity-30 active:bg-opacity-40 transition-all duration-300 border border-white border-opacity-30 text-sm sm:text-base touch-manipulation"
+                            >
+                                <Eye size={16} className="sm:w-5 sm:h-5" />
+                                <span>My Complaints</span>
+                            </button>
+                        </div>
+                        
+                        {/* Mobile-Optimized Trust Indicators */}
+                        <div className="mt-8 sm:mt-10 grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-6 text-white px-2">
+                            <div className="text-center">
+                                <div className="text-lg sm:text-xl md:text-2xl font-bold">24/7</div>
+                                <div className="text-xs sm:text-sm opacity-90 leading-tight">Support Available</div>
+                            </div>
+                            <div className="text-center">
+                                <div className="text-lg sm:text-xl md:text-2xl font-bold">18 hrs</div>
+                                <div className="text-xs sm:text-sm opacity-90 leading-tight">Avg Resolution</div>
+                            </div>
+                            <div className="text-center">
+                                <div className="text-lg sm:text-xl md:text-2xl font-bold">94.2%</div>
+                                <div className="text-xs sm:text-sm opacity-90 leading-tight">Satisfaction Rate</div>
+                            </div>
+                            <div className="text-center">
+                                <div className="text-lg sm:text-xl md:text-2xl font-bold">2M+</div>
+                                <div className="text-xs sm:text-sm opacity-90 leading-tight">Issues Resolved</div>
+                            </div>
                         </div>
                     </div>
-                    <h1 className="text-4xl md:text-5xl font-bold text-white mb-6 leading-tight">
-                        Your Concerns, <span className="text-yellow-300">Our Priority.</span>
-                    </h1>
-                    <p className="text-xl text-gray-100 mb-8 leading-relaxed max-w-3xl mx-auto">
-                        Transparent, efficient, and reliable complaint resolution for your journey with Indian Railways.
+                </div>
+            </section>
+
+            {/* How It Works Section - Mobile-Optimized */}
+            <section 
+                id="how-it-works"
+                data-section
+                className={`bg-white p-4 sm:p-6 md:p-8 lg:p-12 rounded-lg sm:rounded-2xl shadow-sm border border-gray-200 transition-all duration-700 ${
+                    activeSection === 'how-it-works' ? 'opacity-100 transform translate-y-0' : 'opacity-90 transform translate-y-2'
+                }`}
+            >
+                <div className="text-center mb-6 sm:mb-8 md:mb-10">
+                    <h3 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-2 sm:mb-4">How It Works</h3>
+                    <p className="text-base sm:text-lg text-gray-600">Simple steps to resolve your concerns</p>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
+                    <div className="text-center p-4 sm:p-6 bg-gray-50 sm:bg-transparent rounded-lg sm:rounded-none">
+                        <div className="flex justify-center mb-3 sm:mb-4">
+                            <div className="p-3 sm:p-4 bg-blue-100 rounded-lg sm:rounded-xl">
+                                <FileText className="h-6 w-6 sm:h-8 sm:w-8 text-blue-700" />
+                            </div>
+                        </div>
+                        <div className="text-xs sm:text-sm font-bold text-blue-700 mb-2">STEP 1</div>
+                        <h4 className="text-lg sm:text-xl font-bold text-gray-800 mb-2 sm:mb-3">Submit Your Complaint</h4>
+                        <p className="text-sm sm:text-base text-gray-600 leading-relaxed">
+                            Use our intelligent guided form to file your grievance accurately with all necessary details.
+                        </p>
+                    </div>
+                    <div className="text-center p-4 sm:p-6 bg-gray-50 sm:bg-transparent rounded-lg sm:rounded-none">
+                        <div className="flex justify-center mb-3 sm:mb-4">
+                            <div className="p-3 sm:p-4 bg-gray-100 rounded-lg sm:rounded-xl">
+                                <Search className="h-6 w-6 sm:h-8 sm:w-8 text-gray-700" />
+                            </div>
+                        </div>
+                        <div className="text-xs sm:text-sm font-bold text-gray-700 mb-2">STEP 2</div>
+                        <h4 className="text-lg sm:text-xl font-bold text-gray-800 mb-2 sm:mb-3">Track Progress</h4>
+                        <p className="text-sm sm:text-base text-gray-600 leading-relaxed">
+                            Watch your complaint's progress on a transparent timeline with real-time updates.
+                        </p>
+                    </div>
+                    <div className="text-center p-4 sm:p-6 bg-gray-50 sm:bg-transparent rounded-lg sm:rounded-none">
+                        <div className="flex justify-center mb-3 sm:mb-4">
+                            <div className="p-3 sm:p-4 bg-green-100 rounded-lg sm:rounded-xl">
+                                <CheckCircle className="h-6 w-6 sm:h-8 sm:w-8 text-green-700" />
+                            </div>
+                        </div>
+                        <div className="text-xs sm:text-sm font-bold text-green-700 mb-2">STEP 3</div>
+                        <h4 className="text-lg sm:text-xl font-bold text-gray-800 mb-2 sm:mb-3">Get Resolution</h4>
+                        <p className="text-sm sm:text-base text-gray-600 leading-relaxed">
+                            Receive clear updates and actionable resolutions to your concerns.
+                        </p>
+                    </div>
+                </div>
+            </section>
+            
+            {/* System Performance Dashboard - Mobile-Optimized */}
+            <section 
+                id="performance"
+                data-section
+                className={`bg-white p-4 sm:p-6 md:p-8 lg:p-12 rounded-lg sm:rounded-2xl shadow-sm border border-gray-200 transition-all duration-700 ${
+                    activeSection === 'performance' ? 'opacity-100 transform translate-y-0' : 'opacity-90 transform translate-y-2'
+                }`}
+            >
+                <div className="text-center mb-6 sm:mb-8 md:mb-10">
+                    <h3 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-2 sm:mb-4">System Performance</h3>
+                    <p className="text-base sm:text-lg text-gray-600">Real-time insights into our service excellence</p>
+                </div>
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
+                    <div className="bg-gray-50 p-4 sm:p-6 rounded-lg sm:rounded-xl border border-gray-200 text-center">
+                        <div className="flex justify-center mb-2 sm:mb-3">
+                            <Shield className="h-6 w-6 sm:h-8 sm:w-8 text-green-600" />
+                        </div>
+                        <div className="text-lg sm:text-xl md:text-2xl font-bold text-gray-800">Operational</div>
+                        <div className="text-xs sm:text-sm text-gray-600">System Status</div>
+                    </div>
+                    <div className="bg-gray-50 p-4 sm:p-6 rounded-lg sm:rounded-xl border border-gray-200 text-center">
+                        <div className="flex justify-center mb-2 sm:mb-3">
+                            <Clock className="h-6 w-6 sm:h-8 sm:w-8 text-blue-600" />
+                        </div>
+                        <div className="text-lg sm:text-xl md:text-2xl font-bold text-gray-800">18 Hours</div>
+                        <div className="text-xs sm:text-sm text-gray-600">Avg. Resolution</div>
+                    </div>
+                    <div className="bg-gray-50 p-4 sm:p-6 rounded-lg sm:rounded-xl border border-gray-200 text-center">
+                        <div className="flex justify-center mb-2 sm:mb-3">
+                            <Award className="h-6 w-6 sm:h-8 sm:w-8 text-gray-600" />
+                        </div>
+                        <div className="text-lg sm:text-xl md:text-2xl font-bold text-gray-800">2,154</div>
+                        <div className="text-xs sm:text-sm text-gray-600">Resolved This Week</div>
+                    </div>
+                    <div className="bg-gray-50 p-4 sm:p-6 rounded-lg sm:rounded-xl border border-gray-200 text-center">
+                        <div className="flex justify-center mb-2 sm:mb-3">
+                            <Heart className="h-6 w-6 sm:h-8 sm:w-8 text-gray-600" />
+                        </div>
+                        <div className="text-lg sm:text-xl md:text-2xl font-bold text-gray-800">94.2%</div>
+                        <div className="text-xs sm:text-sm text-gray-600">Satisfaction Rate</div>
+                    </div>
+                </div>
+            </section>
+
+            {/* Features Showcase - Mobile-Optimized */}
+            <section 
+                id="features"
+                data-section
+                className={`bg-white p-4 sm:p-6 md:p-8 lg:p-12 rounded-lg sm:rounded-2xl shadow-sm border border-gray-200 transition-all duration-700 ${
+                    activeSection === 'features' ? 'opacity-100 transform translate-y-0' : 'opacity-90 transform translate-y-2'
+                }`}
+            >
+                <div className="text-center mb-6 sm:mb-8 md:mb-10">
+                    <h3 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-2 sm:mb-4">Why Choose RailCare?</h3>
+                    <p className="text-base sm:text-lg text-gray-600">Advanced features for better complaint resolution</p>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                    <div className="p-4 sm:p-6 border border-gray-200 rounded-lg sm:rounded-xl hover:shadow-md active:shadow-lg transition-all duration-300 touch-manipulation">
+                        <div className="p-2 sm:p-3 bg-blue-100 rounded-lg w-fit mb-3 sm:mb-4">
+                            <Zap className="h-5 w-5 sm:h-6 sm:w-6 text-blue-700" />
+                        </div>
+                        <h4 className="text-base sm:text-lg font-bold text-gray-800 mb-2">AI-Powered Classification</h4>
+                        <p className="text-gray-600 text-sm leading-relaxed">Smart categorization ensures your complaint reaches the right department instantly.</p>
+                    </div>
+                    <div className="p-4 sm:p-6 border border-gray-200 rounded-lg sm:rounded-xl hover:shadow-md active:shadow-lg transition-all duration-300 touch-manipulation">
+                        <div className="p-2 sm:p-3 bg-gray-100 rounded-lg w-fit mb-3 sm:mb-4">
+                            <Globe className="h-5 w-5 sm:h-6 sm:w-6 text-gray-700" />
+                        </div>
+                        <h4 className="text-base sm:text-lg font-bold text-gray-800 mb-2">Multi-Language Support</h4>
+                        <p className="text-gray-600 text-sm leading-relaxed">File complaints in your preferred language for better communication.</p>
+                    </div>
+                    <div className="p-4 sm:p-6 border border-gray-200 rounded-lg sm:rounded-xl hover:shadow-md active:shadow-lg transition-all duration-300 touch-manipulation md:col-span-2 lg:col-span-1">
+                        <div className="p-2 sm:p-3 bg-green-100 rounded-lg w-fit mb-3 sm:mb-4">
+                            <TrendingUp className="h-5 w-5 sm:h-6 sm:w-6 text-green-700" />
+                        </div>
+                        <h4 className="text-base sm:text-lg font-bold text-gray-800 mb-2">Real-Time Analytics</h4>
+                        <p className="text-gray-600 text-sm leading-relaxed">Track resolution patterns and system performance transparently.</p>
+                    </div>
+                </div>
+            </section>
+
+            {/* Emergency Support Section - Mobile-Optimized */}
+            <section 
+                id="emergency"
+                data-section
+                className={`relative p-4 sm:p-6 md:p-8 lg:p-12 rounded-lg sm:rounded-2xl shadow-lg text-white overflow-hidden transition-all duration-700 ${
+                    activeSection === 'emergency' ? 'opacity-100 transform translate-y-0' : 'opacity-90 transform translate-y-2'
+                }`}
+                style={{
+                    backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url(${railwayImage1})`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                    backgroundRepeat: 'no-repeat'
+                }}
+            >
+                <div className="relative z-10 text-center max-w-3xl mx-auto">
+                    <div className="flex justify-center mb-4 sm:mb-6">
+                        <div className="p-3 sm:p-4 bg-white bg-opacity-20 backdrop-blur-sm rounded-lg sm:rounded-xl">
+                            <Phone className="h-6 w-6 sm:h-8 sm:w-8 md:h-10 md:w-10 text-white" />
+                        </div>
+                    </div>
+                    <h3 className="text-2xl sm:text-3xl font-bold mb-3 sm:mb-4">Need Immediate Assistance?</h3>
+                    <p className="text-red-100 mb-6 sm:mb-8 text-base sm:text-lg leading-relaxed px-2">
+                        Our 24/7 emergency support team is always ready to help with urgent safety matters and critical situations.
                     </p>
-                    <div className="flex flex-col lg:flex-row justify-center gap-4 max-w-4xl mx-auto">
+                    <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center px-2">
+                        <div className="flex items-center justify-center space-x-3 bg-white bg-opacity-20 backdrop-blur-sm px-4 sm:px-6 py-3 sm:py-4 rounded-lg sm:rounded-xl border border-white border-opacity-30 touch-manipulation">
+                            <Phone className="h-5 w-5 sm:h-6 sm:w-6 flex-shrink-0" />
+                            <div className="text-left">
+                                <div className="font-bold text-base sm:text-lg">Emergency: 139</div>
+                                <div className="text-red-100 text-xs sm:text-sm">For critical situations</div>
+                            </div>
+                        </div>
+                        <div className="flex items-center justify-center space-x-3 bg-white bg-opacity-20 backdrop-blur-sm px-4 sm:px-6 py-3 sm:py-4 rounded-lg sm:rounded-xl border border-white border-opacity-30 touch-manipulation">
+                            <Globe className="h-5 w-5 sm:h-6 sm:w-6 flex-shrink-0" />
+                            <div className="text-left">
+                                <div className="font-bold text-base sm:text-lg">24/7 Online Support</div>
+                                <div className="text-red-100 text-xs sm:text-sm">Always available</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* Call to Action Section - Mobile-Optimized */}
+            <section 
+                id="cta"
+                data-section
+                className={`relative p-4 sm:p-6 md:p-8 lg:p-12 rounded-lg sm:rounded-2xl shadow-lg text-white overflow-hidden transition-all duration-700 ${
+                    activeSection === 'cta' ? 'opacity-100 transform translate-y-0' : 'opacity-90 transform translate-y-2'
+                }`}
+                style={{
+                    backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url(${railwayImage})`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                    backgroundRepeat: 'no-repeat'
+                }}
+            >
+                <div className="relative z-10 text-center max-w-3xl mx-auto">
+                    <h3 className="text-2xl sm:text-3xl font-bold mb-3 sm:mb-4">Ready to Get Started?</h3>
+                    <p className="text-blue-100 mb-6 sm:mb-8 text-base sm:text-lg leading-relaxed px-2">
+                        Join millions of passengers who trust RailCare for transparent and efficient complaint resolution.
+                    </p>
+                    <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center px-2">
                         <button 
                             onClick={() => navigate('/submit')} 
-                            className="flex items-center justify-center gap-3 bg-blue-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-blue-700 transition-all duration-300 shadow-lg"
+                            className="bg-white text-blue-700 font-bold py-3 px-4 sm:px-6 rounded-lg hover:bg-gray-100 active:bg-gray-200 transition-all duration-300 shadow-lg text-sm sm:text-base touch-manipulation"
                         >
-                            <FileText size={20} />
-                            <span>File Complaint</span>
+                            File Your First Complaint
                         </button>
                         <button 
-                            onClick={() => navigate('/track')} 
-                            className="flex items-center justify-center gap-3 bg-white bg-opacity-20 backdrop-blur-sm text-white font-bold py-3 px-6 rounded-lg hover:bg-opacity-30 transition-all duration-300 border border-white border-opacity-30"
+                            onClick={() => navigate('/guidelines')} 
+                            className="bg-white bg-opacity-20 backdrop-blur-sm text-white font-bold py-3 px-4 sm:px-6 rounded-lg hover:bg-opacity-30 active:bg-opacity-40 transition-all duration-300 border border-white border-opacity-30 text-sm sm:text-base touch-manipulation"
                         >
-                            <Search size={20} />
-                            <span>Track Complaint</span>
-                        </button>
-                        <button 
-                            onClick={() => navigate('/lookup')} 
-                            className="flex items-center justify-center gap-3 bg-white bg-opacity-20 backdrop-blur-sm text-white font-bold py-3 px-6 rounded-lg hover:bg-opacity-30 transition-all duration-300 border border-white border-opacity-30"
-                        >
-                            <Eye size={20} />
-                            <span>My Complaints</span>
+                            Read Guidelines
                         </button>
                     </div>
-                    
-                    {/* Trust Indicators */}
-                    <div className="mt-10 grid grid-cols-2 md:grid-cols-4 gap-6 text-white">
-                        <div className="text-center">
-                            <div className="text-2xl font-bold">24/7</div>
-                            <div className="text-sm opacity-90">Support Available</div>
-                        </div>
-                        <div className="text-center">
-                            <div className="text-2xl font-bold">18 hrs</div>
-                            <div className="text-sm opacity-90">Avg Resolution</div>
-                        </div>
-                        <div className="text-center">
-                            <div className="text-2xl font-bold">94.2%</div>
-                            <div className="text-sm opacity-90">Satisfaction Rate</div>
-                        </div>
-                        <div className="text-center">
-                            <div className="text-2xl font-bold">2M+</div>
-                            <div className="text-sm opacity-90">Issues Resolved</div>
-                        </div>
-                    </div>
                 </div>
-            </div>
-        </section>
+            </section>
 
-        {/* How It Works Section - Clean Design */}
-        <section className="bg-white p-8 md:p-12 rounded-2xl shadow-sm border border-gray-200">
-            <div className="text-center mb-10">
-                <h3 className="text-3xl font-bold text-gray-800 mb-4">How It Works</h3>
-                <p className="text-lg text-gray-600">Simple steps to resolve your concerns</p>
-            </div>
-            <div className="grid md:grid-cols-3 gap-8">
-                <div className="text-center p-6">
-                    <div className="flex justify-center mb-4">
-                        <div className="p-4 bg-blue-100 rounded-xl">
-                            <FileText className="h-8 w-8 text-blue-700" />
-                        </div>
-                    </div>
-                    <div className="text-sm font-bold text-blue-700 mb-2">STEP 1</div>
-                    <h4 className="text-xl font-bold text-gray-800 mb-3">Submit Your Complaint</h4>
-                    <p className="text-gray-600 leading-relaxed">
-                        Use our intelligent guided form to file your grievance accurately with all necessary details.
-                    </p>
-                </div>
-                <div className="text-center p-6">
-                    <div className="flex justify-center mb-4">
-                        <div className="p-4 bg-gray-100 rounded-xl">
-                            <Search className="h-8 w-8 text-gray-700" />
-                        </div>
-                    </div>
-                    <div className="text-sm font-bold text-gray-700 mb-2">STEP 2</div>
-                    <h4 className="text-xl font-bold text-gray-800 mb-3">Track Progress</h4>
-                    <p className="text-gray-600 leading-relaxed">
-                        Watch your complaint's progress on a transparent timeline with real-time updates.
-                    </p>
-                </div>
-                <div className="text-center p-6">
-                    <div className="flex justify-center mb-4">
-                        <div className="p-4 bg-green-100 rounded-xl">
-                            <CheckCircle className="h-8 w-8 text-green-700" />
-                        </div>
-                    </div>
-                    <div className="text-sm font-bold text-green-700 mb-2">STEP 3</div>
-                    <h4 className="text-xl font-bold text-gray-800 mb-3">Get Resolution</h4>
-                    <p className="text-gray-600 leading-relaxed">
-                        Receive clear updates and actionable resolutions to your concerns.
-                    </p>
-                </div>
-            </div>
-        </section>
-        
-        {/* System Performance Dashboard - Clean */}
-        <section className="bg-white p-8 md:p-12 rounded-2xl shadow-sm border border-gray-200">
-            <div className="text-center mb-10">
-                <h3 className="text-3xl font-bold text-gray-800 mb-4">System Performance</h3>
-                <p className="text-lg text-gray-600">Real-time insights into our service excellence</p>
-            </div>
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <div className="bg-gray-50 p-6 rounded-xl border border-gray-200 text-center">
-                    <div className="flex justify-center mb-3">
-                        <Shield className="h-8 w-8 text-green-600" />
-                    </div>
-                    <div className="text-2xl font-bold text-gray-800">Operational</div>
-                    <div className="text-sm text-gray-600">System Status</div>
-                </div>
-                <div className="bg-gray-50 p-6 rounded-xl border border-gray-200 text-center">
-                    <div className="flex justify-center mb-3">
-                        <Clock className="h-8 w-8 text-blue-600" />
-                    </div>
-                    <div className="text-2xl font-bold text-gray-800">18 Hours</div>
-                    <div className="text-sm text-gray-600">Avg. Resolution</div>
-                </div>
-                <div className="bg-gray-50 p-6 rounded-xl border border-gray-200 text-center">
-                    <div className="flex justify-center mb-3">
-                        <Award className="h-8 w-8 text-gray-600" />
-                    </div>
-                    <div className="text-2xl font-bold text-gray-800">2,154</div>
-                    <div className="text-sm text-gray-600">Resolved This Week</div>
-                </div>
-                <div className="bg-gray-50 p-6 rounded-xl border border-gray-200 text-center">
-                    <div className="flex justify-center mb-3">
-                        <Heart className="h-8 w-8 text-gray-600" />
-                    </div>
-                    <div className="text-2xl font-bold text-gray-800">94.2%</div>
-                    <div className="text-sm text-gray-600">Satisfaction Rate</div>
-                </div>
-            </div>
-        </section>
-
-        {/* Features Showcase - Clean */}
-        <section className="bg-white p-8 md:p-12 rounded-2xl shadow-sm border border-gray-200">
-            <div className="text-center mb-10">
-                <h3 className="text-3xl font-bold text-gray-800 mb-4">Why Choose RailCare?</h3>
-                <p className="text-lg text-gray-600">Advanced features for better complaint resolution</p>
-            </div>
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <div className="p-6 border border-gray-200 rounded-xl hover:shadow-md transition-all duration-300">
-                    <div className="p-3 bg-blue-100 rounded-lg w-fit mb-4">
-                        <Zap className="h-6 w-6 text-blue-700" />
-                    </div>
-                    <h4 className="text-lg font-bold text-gray-800 mb-2">AI-Powered Classification</h4>
-                    <p className="text-gray-600 text-sm">Smart categorization ensures your complaint reaches the right department instantly.</p>
-                </div>
-                <div className="p-6 border border-gray-200 rounded-xl hover:shadow-md transition-all duration-300">
-                    <div className="p-3 bg-gray-100 rounded-lg w-fit mb-4">
-                        <Globe className="h-6 w-6 text-gray-700" />
-                    </div>
-                    <h4 className="text-lg font-bold text-gray-800 mb-2">Multi-Language Support</h4>
-                    <p className="text-gray-600 text-sm">File complaints in your preferred language for better communication.</p>
-                </div>
-                <div className="p-6 border border-gray-200 rounded-xl hover:shadow-md transition-all duration-300">
-                    <div className="p-3 bg-green-100 rounded-lg w-fit mb-4">
-                        <TrendingUp className="h-6 w-6 text-green-700" />
-                    </div>
-                    <h4 className="text-lg font-bold text-gray-800 mb-2">Real-Time Analytics</h4>
-                    <p className="text-gray-600 text-sm">Track resolution patterns and system performance transparently.</p>
-                </div>
-            </div>
-        </section>
-
-        {/* Emergency Support Section - B&W Railway Background */}
-        <section 
-            className="relative p-8 md:p-12 rounded-2xl shadow-lg text-white overflow-hidden"
-            style={{
-                backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url(${railwayImage1 })`,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-                backgroundRepeat: 'no-repeat'
-            }}
-        >
-            <div className="relative z-10 text-center max-w-3xl mx-auto">
-                <div className="flex justify-center mb-6">
-                    <div className="p-4 bg-white bg-opacity-20 backdrop-blur-sm rounded-xl">
-                        <Phone className="h-10 w-10 text-white" />
-                    </div>
-                </div>
-                <h3 className="text-3xl font-bold mb-4">Need Immediate Assistance?</h3>
-                <p className="text-red-100 mb-8 text-lg leading-relaxed">
-                    Our 24/7 emergency support team is always ready to help with urgent safety matters and critical situations.
-                </p>
-                <div className="flex flex-col sm:flex-row gap-6 justify-center">
-                    <div className="flex items-center justify-center space-x-3 bg-white bg-opacity-20 backdrop-blur-sm px-6 py-4 rounded-xl border border-white border-opacity-30">
-                        <Phone className="h-6 w-6" />
-                        <div className="text-left">
-                            <div className="font-bold text-lg">Emergency: 139</div>
-                            <div className="text-red-100 text-sm">For critical situations</div>
-                        </div>
-                    </div>
-                    <div className="flex items-center justify-center space-x-3 bg-white bg-opacity-20 backdrop-blur-sm px-6 py-4 rounded-xl border border-white border-opacity-30">
-                        <Globe className="h-6 w-6" />
-                        <div className="text-left">
-                            <div className="font-bold text-lg">24/7 Online Support</div>
-                            <div className="text-red-100 text-sm">Always available</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        {/* Call to Action Section - B&W Railway Background */}
-        <section 
-            className="relative p-8 md:p-12 rounded-2xl shadow-lg text-white overflow-hidden"
-            style={{
-                backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url(${railwayImage })`,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-                backgroundRepeat: 'no-repeat'
-            }}
-        >
-            <div className="relative z-10 text-center max-w-3xl mx-auto">
-                <h3 className="text-3xl font-bold mb-4">Ready to Get Started?</h3>
-                <p className="text-blue-100 mb-8 text-lg leading-relaxed">
-                    Join millions of passengers who trust RailCare for transparent and efficient complaint resolution.
-                </p>
-                <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                    <button 
-                        onClick={() => navigate('/submit')} 
-                        className="bg-white text-blue-700 font-bold py-3 px-6 rounded-lg hover:bg-gray-100 transition-all duration-300 shadow-lg"
+            {/* Mobile-Specific Quick Actions - Floating Action Button */}
+            <div className="md:hidden fixed bottom-6 right-4 z-40">
+                <div className="flex flex-col gap-3">
+                    <button
+                        onClick={() => navigate('/submit')}
+                        className="w-14 h-14 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 active:bg-blue-800 transition-all duration-300 flex items-center justify-center touch-manipulation"
+                        aria-label="File Complaint"
                     >
-                        File Your First Complaint
+                        <FileText className="h-6 w-6" />
                     </button>
-                    <button 
-                        onClick={() => navigate('/guidelines')} 
-                        className="bg-white bg-opacity-20 backdrop-blur-sm text-white font-bold py-3 px-6 rounded-lg hover:bg-opacity-30 transition-all duration-300 border border-white border-opacity-30"
+                    <button
+                        onClick={() => navigate('/track')}
+                        className="w-12 h-12 bg-gray-600 text-white rounded-full shadow-lg hover:bg-gray-700 active:bg-gray-800 transition-all duration-300 flex items-center justify-center touch-manipulation"
+                        aria-label="Track Complaint"
                     >
-                        Read Guidelines
+                        <Search className="h-5 w-5" />
                     </button>
                 </div>
             </div>
-        </section>
-    </div>
-);
+
+            {/* Mobile-Specific Bottom Padding for Safe Area */}
+            <div className="h-20 md:hidden"></div>
+        </div>
+    );
+};
 
 
 

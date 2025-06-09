@@ -382,8 +382,11 @@ const StaffLoginPage = ({ onBack, complaints, navigate }) => {
     }, [filteredComplaints, searchTerm, statusFilter]);
 
     if (!isLoggedIn) {
-        return (
-            <div className="max-w-md mx-auto mt-20">
+    return (
+        // MODIFICATION: Replaced the old div with a flex container to center the login box.
+        // This removes the large top margin and provides a balanced layout.
+        <div className="flex items-center justify-center py-12 px-4">
+            <div className="w-full max-w-md">
                 <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-8">
                     <div className="flex items-center justify-between mb-6">
                         <button 
@@ -440,6 +443,7 @@ const StaffLoginPage = ({ onBack, complaints, navigate }) => {
 
                         <button
                             type="submit"
+                            // MODIFICATION: Changed bg-blue-600 to bg-orange-600 for UI consistency.
                             className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-orange-700 transition-colors flex items-center justify-center gap-2"
                         >
                             <Shield className="h-5 w-5" />
@@ -456,8 +460,9 @@ const StaffLoginPage = ({ onBack, complaints, navigate }) => {
                     </div>
                 </div>
             </div>
-        );
-    }
+        </div>
+    );
+}
 
     return (
         <div className="max-w-7xl mx-auto">

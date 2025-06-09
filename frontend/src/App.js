@@ -16,6 +16,7 @@ import {
 } from './constants';
 import GuidelinesPage from './GuidelinesPage';
 import StaffLoginPage from './staff';
+import logo from './logo.png';
 
 
 // At the top of App.js, add this import
@@ -498,25 +499,27 @@ const Header = ({ navigate, currentPath }) => {
             <nav className="container mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex justify-between items-center h-16">
                     {/* Logo and Brand */}
-                    <div 
-                        className="flex items-center space-x-3 cursor-pointer group" 
-                        onClick={() => navigate('/')}
-                    >
-                        <div className="relative">
-                            <img 
-                                src="https://placehold.co/40x40/4f46e5/ffffff?text=IR" 
-                                alt="IRCTC Logo" 
-                                className="h-10 w-10 rounded-lg shadow-md group-hover:shadow-lg transition-all duration-300 group-hover:scale-105" 
-                            />
-                            <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
-                        </div>
-                        <div className="hidden sm:block">
-                            <h1 className="text-xl font-bold text-gray-800 group-hover:text-indigo-600 transition-colors">
-                                Grievance Portal
-                            </h1>
-                            <p className="text-xs text-gray-500 font-medium">Indian Railways • 24/7 Support</p>
-                        </div>
-                    </div>
+                    {/* Updated Logo and Brand - Removed border and green dot */}
+<div 
+    className="flex items-center space-x-3 cursor-pointer group" 
+    onClick={() => navigate('/')}
+>
+    <div className="relative">
+        <img 
+            src={logo}
+            alt="RailCare Logo" 
+            className="h-10 w-10 object-contain group-hover:scale-105 transition-all duration-300"
+        />
+        {/* Green dot removed */}
+    </div>
+    <div className="hidden sm:block">
+        <h1 className="text-xl font-bold text-gray-800 group-hover:text-indigo-600 transition-colors">
+            RailCare
+        </h1>
+        <p className="text-xs text-gray-500 font-medium">Smart Complaint Resolution Platform </p>
+    </div>
+</div>
+
 
                     {/* Desktop Navigation - Simplified */}
                     <div className="hidden lg:flex items-center space-x-1">
@@ -745,22 +748,7 @@ const Header = ({ navigate, currentPath }) => {
             </nav>
 
             {/* Status Bar */}
-            <div className="bg-green-50 border-b border-green-200 px-4 py-1">
-                <div className="container mx-auto flex items-center justify-between text-xs">
-                    <div className="flex items-center space-x-4">
-                        <div className="flex items-center space-x-1 text-green-700">
-                            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                            <span className="font-medium">System Operational</span>
-                        </div>
-                        <span className="text-gray-600">Last updated: 2 min ago</span>
-                    </div>
-                    <div className="hidden sm:flex items-center space-x-4 text-gray-600">
-                        <span>Avg Response: 18 hrs</span>
-                        <span>•</span>
-                        <span>94.2% Satisfaction</span>
-                    </div>
-                </div>
-            </div>
+            
         </header>
     );
 };
@@ -777,7 +765,7 @@ const HomePage = ({ navigate }) => (
                     </div>
                 </div>
                 <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-                    Your Voice, <span className="text-indigo-600">Heard.</span>
+                    Your Concerns, <span className="text-indigo-600">Our Priority.</span>
                 </h2>
                 <p className="text-lg text-gray-600 mb-8 leading-relaxed">
                     Transparent, efficient, and reliable complaint resolution for your journey with Indian Railways.
@@ -1785,6 +1773,117 @@ const FaqPage = () => {
 
 // --- Main App Component ---
 // Add this before the App component
+// Add this Footer component before the App component
+const Footer = () => {
+    return (
+        <footer className="bg-gray-900 text-white">
+            <div className="container mx-auto px-4 py-8">
+                <div className="grid md:grid-cols-3 gap-8">
+                    {/* Company Info */}
+                    <div>
+                        <div className="flex items-center space-x-3 mb-4">
+                            <img 
+                                src={logo}
+                                alt="RailCare Logo" 
+                                className="h-8 w-8 object-contain"
+                            />
+                            <h3 className="text-xl font-bold">RailCare</h3>
+                        </div>
+                        <p className="text-gray-400 text-sm leading-relaxed">
+                            Smart Complaint Resolution Platform for Indian Railways. 
+                            Transparent, efficient, and reliable service for all passengers.
+                        </p>
+                    </div>
+
+                    {/* Quick Links */}
+                    <div>
+                        <h4 className="text-lg font-bold mb-4">Quick Links</h4>
+                        <ul className="space-y-2">
+                            <li>
+                                <a href="/" className="text-gray-400 hover:text-white transition-colors text-sm">
+                                    Home
+                                </a>
+                            </li>
+                            <li>
+                                <a href="/submit" className="text-gray-400 hover:text-white transition-colors text-sm">
+                                    File Complaint
+                                </a>
+                            </li>
+                            <li>
+                                <a href="/track" className="text-gray-400 hover:text-white transition-colors text-sm">
+                                    Track Complaint
+                                </a>
+                            </li>
+                            <li>
+                                <a href="/guidelines" className="text-gray-400 hover:text-white transition-colors text-sm">
+                                    Guidelines
+                                </a>
+                            </li>
+                            <li>
+                                <a href="/faq" className="text-gray-400 hover:text-white transition-colors text-sm">
+                                    FAQ
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+
+                    {/* Contact & Support */}
+                    <div>
+                        <h4 className="text-lg font-bold mb-4">Support</h4>
+                        <ul className="space-y-2">
+                            <li className="flex items-center space-x-2 text-gray-400 text-sm">
+                                <Phone className="h-4 w-4" />
+                                <span>Emergency: 139</span>
+                            </li>
+                            <li className="flex items-center space-x-2 text-gray-400 text-sm">
+                                <Phone className="h-4 w-4" />
+                                <span>General: 1800-111-139</span>
+                            </li>
+                            <li className="flex items-center space-x-2 text-gray-400 text-sm">
+                                <Mail className="h-4 w-4" />
+                                <span>support@indianrailways.gov.in</span>
+                            </li>
+                            <li className="text-gray-400 text-sm">
+                                <span>24/7 Online Support</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                {/* Bottom Section */}
+                <div className="border-t border-gray-700 mt-8 pt-6">
+                    <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
+                        <div className="text-gray-400 text-sm">
+                            © 2025 RailCare. All Rights Reserved.
+                        </div>
+                        
+                        <div className="text-gray-400 text-sm">
+                            Project by{' '}
+                            <a 
+                                href="https://www.linkedin.com/in/prakhar3125/" 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="text-blue-400 hover:text-blue-300 font-medium transition-colors"
+                            >
+                                Prakhar Sinha
+                            </a>
+                            {' '}•{' '}
+                            <a 
+                                href="https://github.com/prakhar3125" 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="text-blue-400 hover:text-blue-300 font-medium transition-colors flex items-center space-x-1 inline-flex"
+                            >
+                                <span>GitHub</span>
+                                <ExternalLink className="h-3 w-3" />
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </footer>
+    );
+};
 
 
 const App = () => {
@@ -2133,14 +2232,15 @@ const generateComplaintStatus = (category, priority, timeElapsed) => {
 };
 
     return (
-        <div className="bg-gray-50 text-gray-800 min-h-screen">
-            <Header navigate={navigate} currentPath={currentPath} />
-            <main className="container mx-auto p-4 sm:p-6 lg:p-8">
-                {renderPage()}
-            </main>
-            <Modal {...notification} onClose={() => setNotification(prev => ({...prev, isVisible: false}))} />
-        </div>
-    );
+    <div className="bg-gray-50 text-gray-800 min-h-screen flex flex-col">
+        <Header navigate={navigate} currentPath={currentPath} />
+        <main className="container mx-auto p-4 sm:p-6 lg:p-8 flex-grow">
+            {renderPage()}
+        </main>
+        <Footer /> {/* Add this line */}
+        <Modal {...notification} onClose={() => setNotification(prev => ({...prev, isVisible: false}))} />
+    </div>
+);
 };
 
 export default App;

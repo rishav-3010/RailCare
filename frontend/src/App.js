@@ -133,10 +133,22 @@ const SmartDescriptionTextarea = ({ formData, handleFormChange, onTextAnalysis, 
     const [wordCount, setWordCount] = useState(0);
     const [isFocused, setIsFocused] = useState(false);
     
+    // FIXED: Add cleanup on component unmount
+    useEffect(() => {
+        return () => {
+            if (analysisTimeout) {
+                clearTimeout(analysisTimeout);
+            }
+        };
+    }, [analysisTimeout]);
+    
     const handleDescriptionChange = (e) => {
         const value = e.target.value;
         handleFormChange(e);
-        setWordCount(value.trim().split(/\s+/).filter(word => word.length > 0).length);
+        
+        // FIXED: Better word counting with edge case handling
+        const words = value.trim().split(/\s+/).filter(word => word.length > 0);
+        setWordCount(words.length);
         
         // Reset analysis state when text changes
         setHasAnalyzed(false);
@@ -146,17 +158,44 @@ const SmartDescriptionTextarea = ({ formData, handleFormChange, onTextAnalysis, 
             clearTimeout(analysisTimeout);
         }
         
-        // Set analyzing state
-        setIsAnalyzing(true);
-        
-        // Set new timeout for analysis (debounce)
-        const newTimeout = setTimeout(() => {
+        // FIXED: Only analyze if text is substantial enough
+        if (value.trim().length >= 20) {
+            setIsAnalyzing(true);
+            
+            // Set new timeout for analysis (debounce)
+            const newTimeout = setTimeout(() => {
+                setIsAnalyzing(false);
+                setHasAnalyzed(true);
+                onTextAnalysis(value, true);
+            }, 1000);
+            
+            setAnalysisTimeout(newTimeout);
+        } else {
+            // FIXED: Clear analysis for short text
             setIsAnalyzing(false);
-            setHasAnalyzed(true);  // ✅ Set local analyzed state
-            onTextAnalysis(value, true); // ✅ Pass both value and analyzed flag
-        }, 1000); // Analyze after 1 second of no typing
-        
-        setAnalysisTimeout(newTimeout);
+            setHasAnalyzed(false);
+            onTextAnalysis(value, false);
+        }
+    };
+    
+    // FIXED: Handle focus/blur with proper scroll behavior
+    const handleFocus = () => {
+        setIsFocused(true);
+        // FIXED: Prevent parent scroll when textarea is focused on mobile
+        setTimeout(() => {
+            const textarea = document.getElementById('description');
+            if (textarea && window.innerWidth <= 768) {
+                textarea.scrollIntoView({ 
+                    behavior: 'smooth', 
+                    block: 'center',
+                    inline: 'nearest'
+                });
+            }
+        }, 300); // Delay to account for keyboard opening
+    };
+    
+    const handleBlur = () => {
+        setIsFocused(false);
     };
     
     return (
@@ -184,23 +223,37 @@ const SmartDescriptionTextarea = ({ formData, handleFormChange, onTextAnalysis, 
                     id="description" 
                     value={formData.description} 
                     onChange={handleDescriptionChange}
-                    onFocus={() => setIsFocused(true)}
-                    onBlur={() => setIsFocused(false)}
-                    rows={isFocused ? "6" : "5"}
-                    className={`w-full px-4 py-3 border-2 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none transition-all duration-300 text-base ${
+                    onFocus={handleFocus}
+                    onBlur={handleBlur}
+                    rows={isFocused ? "8" : "5"} // FIXED: More rows when focused for better mobile UX
+                    className={`scrollable-content w-full px-4 py-3 border-2 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none transition-all duration-300 text-base ${
                         error ? 'border-red-300 error-field' : 'border-gray-300'
                     }`}
                     placeholder="Provide all relevant details including date, time, location, and specific issues you encountered. Our AI will analyze your text to suggest the most appropriate category."
                     required
-                    style={{ fontSize: '16px' }} // Prevent zoom on iOS
+                    style={{ 
+                        fontSize: '16px', // Prevent zoom on iOS
+                        WebkitOverflowScrolling: 'touch', // FIXED: Enable momentum scrolling on iOS
+                        overflowY: 'auto', // FIXED: Enable vertical scrolling
+                        touchAction: 'manipulation' // FIXED: Prevent double-tap zoom
+                    }}
+                    data-scrollable="true" // FIXED: Mark as scrollable for touch handler
                 />
                 
-                {/* Mobile-optimized word count */}
-                <div className="absolute bottom-2 right-2 text-xs text-gray-500 bg-white px-2 py-1 rounded shadow-sm">
+                {/* FIXED: Mobile-optimized word count with better positioning */}
+                <div className={`absolute bottom-2 right-2 text-xs text-gray-500 bg-white px-2 py-1 rounded shadow-sm transition-opacity duration-200 ${
+                    isFocused ? 'opacity-80' : 'opacity-60'
+                }`}>
                     <div className="flex items-center space-x-2">
                         <span>{wordCount} words</span>
                         {formData.description.length > 20 && !isAnalyzing && hasAnalyzed && (
                             <span className="text-green-600">✓</span>
+                        )}
+                        {/* FIXED: Add minimum character indicator */}
+                        {formData.description.length < 20 && formData.description.length > 0 && (
+                            <span className="text-orange-500 text-xs">
+                                {20 - formData.description.length} more
+                            </span>
                         )}
                     </div>
                 </div>
@@ -213,15 +266,39 @@ const SmartDescriptionTextarea = ({ formData, handleFormChange, onTextAnalysis, 
                 </p>
             )}
             
-            {/* Mobile-optimized writing hints */}
+            {/* FIXED: Mobile-optimized writing hints with better responsive design */}
             <div className="text-xs text-gray-600 bg-gray-50 p-3 rounded-lg border border-gray-200">
                 <div className="flex items-start space-x-2">
-                    <span className="text-lg">💡</span>
-                    <div>
-                        <strong>Tip:</strong> Include specific keywords like "heart attack", "emergency", "fire", "refund", "food quality" etc. to help our AI suggest the best category for faster resolution.
+                    <span className="text-lg flex-shrink-0">💡</span>
+                    <div className="leading-relaxed">
+                        <strong className="text-gray-800">Writing Tips:</strong>
+                        <div className="mt-1 space-y-1">
+                            <div>• Include keywords like <span className="font-medium">"refund", "delay", "food quality"</span></div>
+                            <div>• Mention date, time, and location</div>
+                            <div>• Be specific about the issue for faster resolution</div>
+                        </div>
                     </div>
                 </div>
             </div>
+            
+            {/* FIXED: Add mobile-specific writing assistance */}
+            {isFocused && window.innerWidth <= 768 && (
+                <div className="fixed bottom-0 left-0 right-0 bg-blue-50 border-t border-blue-200 p-3 z-50">
+                    <div className="flex items-center justify-between text-sm">
+                        <span className="text-blue-700">
+                            {wordCount < 10 ? 'Keep writing...' : wordCount < 20 ? 'Almost there!' : 'Looking good! 👍'}
+                        </span>
+                        <button 
+                            type="button"
+                            onClick={() => document.getElementById('description').blur()}
+                            className="text-blue-600 font-medium px-3 py-1 rounded bg-white border border-blue-200 touch-manipulation"
+                            style={{ minHeight: '32px' }}
+                        >
+                            Done
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
@@ -1366,51 +1443,63 @@ const ComplaintFormPage = ({ onComplaintSubmit }) => {
 
     // Mobile-specific viewport and keyboard handling
     useEffect(() => {
-        const handleResize = () => {
-            const viewportHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
-            const screenHeight = window.screen.height;
-            setIsKeyboardVisible(viewportHeight < screenHeight * 0.75);
-        };
+    const handleResize = () => {
+        const viewportHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+        const screenHeight = window.screen.height;
+        setIsKeyboardVisible(viewportHeight < screenHeight * 0.75);
+    };
 
-        const handleTouchStart = (e) => {
-            setTouchStartY(e.touches[0].clientY);
-        };
+    const handleTouchStart = (e) => {
+        setTouchStartY(e.touches[0].clientY);
+    };
 
-        const handleTouchMove = (e) => {
-            const touchY = e.touches[0].clientY;
-            const touchDiff = touchStartY - touchY;
-            
-            // Prevent overscroll on iOS
-            if (touchDiff > 0 && window.scrollY === 0) {
-                e.preventDefault();
-            }
-        };
-
-        const handleOrientationChange = () => {
-            // Handle orientation changes on mobile
-            setTimeout(() => {
-                window.scrollTo(0, 0);
-            }, 100);
-        };
-
-        if (window.visualViewport) {
-            window.visualViewport.addEventListener('resize', handleResize);
+    const handleTouchMove = (e) => {
+        const touchY = e.touches[0].clientY;
+        const touchDiff = touchStartY - touchY;
+        
+        // FIXED: Only prevent overscroll at document level, not within scrollable areas
+        const target = e.target;
+        const isScrollableElement = target.closest('.scrollable-content, textarea, input, [data-scrollable]');
+        
+        // Only prevent bounce if we're at the top of the document and not in a scrollable element
+        if (!isScrollableElement && touchDiff > 0 && window.scrollY === 0) {
+            e.preventDefault();
         }
-        window.addEventListener('resize', handleResize);
-        window.addEventListener('orientationchange', handleOrientationChange);
-        document.addEventListener('touchstart', handleTouchStart, { passive: true });
-        document.addEventListener('touchmove', handleTouchMove, { passive: false });
+    };
 
-        return () => {
+    const handleOrientationChange = () => {
+        // FIXED: Add proper viewport reset and scroll restoration
+        setTimeout(() => {
+            // Reset viewport
             if (window.visualViewport) {
-                window.visualViewport.removeEventListener('resize', handleResize);
+                window.visualViewport.addEventListener('resize', handleResize);
             }
-            window.removeEventListener('resize', handleResize);
-            window.removeEventListener('orientationchange', handleOrientationChange);
-            document.removeEventListener('touchstart', handleTouchStart);
-            document.removeEventListener('touchmove', handleTouchMove);
-        };
-    }, [touchStartY]);
+            // Restore scroll position more reliably
+            requestAnimationFrame(() => {
+                window.scrollTo(0, 0);
+            });
+        }, 150); // Increased timeout for orientation change
+    };
+
+    // FIXED: Add proper passive event listeners
+    if (window.visualViewport) {
+        window.visualViewport.addEventListener('resize', handleResize);
+    }
+    window.addEventListener('resize', handleResize, { passive: true });
+    window.addEventListener('orientationchange', handleOrientationChange, { passive: true });
+    document.addEventListener('touchstart', handleTouchStart, { passive: true });
+    document.addEventListener('touchmove', handleTouchMove, { passive: false }); // Keep passive: false for preventDefault
+
+    return () => {
+        if (window.visualViewport) {
+            window.visualViewport.removeEventListener('resize', handleResize);
+        }
+        window.removeEventListener('resize', handleResize);
+        window.removeEventListener('orientationchange', handleOrientationChange);
+        document.removeEventListener('touchstart', handleTouchStart);
+        document.removeEventListener('touchmove', handleTouchMove);
+    };
+}, [touchStartY]);
 
     // Mobile-optimized validation with enhanced error handling
     const validateStep = (stepNumber) => {
@@ -1463,34 +1552,44 @@ const ComplaintFormPage = ({ onComplaintSubmit }) => {
     };
 
     const handleNext = () => {
-        if (!validateStep(step)) {
-            // Mobile-optimized error handling with smooth scroll
-            const firstError = document.querySelector('.error-field');
-            if (firstError) {
+    if (!validateStep(step)) {
+        // FIXED: Better error scrolling for mobile
+        const firstError = document.querySelector('.error-field');
+        if (firstError) {
+            // Add delay to ensure DOM is updated
+            setTimeout(() => {
                 firstError.scrollIntoView({ 
                     behavior: 'smooth', 
                     block: 'center',
                     inline: 'nearest'
                 });
-                // Haptic feedback on mobile
-                if (navigator.vibrate) {
-                    navigator.vibrate(100);
+                // Focus the element for better accessibility
+                if (firstError.focus) {
+                    firstError.focus();
                 }
-            }
-            return;
-        }
-        
-        if (step < 4) {
-            setStep(step + 1);
-            // Scroll to top on step change for mobile
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            }, 100);
             
-            // Success haptic feedback
+            // Haptic feedback on mobile
             if (navigator.vibrate) {
-                navigator.vibrate(50);
+                navigator.vibrate(100);
             }
         }
-    };
+        return;
+    }
+    
+    if (step < 4) {
+        setStep(step + 1);
+        // FIXED: More reliable scroll to top with requestAnimationFrame
+        requestAnimationFrame(() => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+        
+        // Success haptic feedback
+        if (navigator.vibrate) {
+            navigator.vibrate(50);
+        }
+    }
+};
 
     // Add this function to handle text analysis
     // Update the text analysis handler
@@ -1520,11 +1619,14 @@ const ComplaintFormPage = ({ onComplaintSubmit }) => {
     };
 
     const handleBack = () => {
-        if (step > 1) {
-            setStep(step - 1);
+    if (step > 1) {
+        setStep(step - 1);
+        // FIXED: Use requestAnimationFrame for smoother scrolling
+        requestAnimationFrame(() => {
             window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-    };
+        });
+    }
+};
 
     const handlePnrFetch = () => {
         if (!pnr || pnr.length !== 10) {

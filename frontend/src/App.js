@@ -3271,6 +3271,14 @@ const generateComplaintStatus = (category, priority, timeElapsed) => {
 
 
     const [notification, setNotification] = useState({ isVisible: false, type: '', title: '', message: '' });
+    const handleUpdateComplaint = (complaintId, updatedComplaintData) => {
+        setComplaints(prev => ({
+            ...prev,
+            [complaintId]: updatedComplaintData
+        }));
+        // Optionally, show a success notification for the admin
+        // console.log(`Complaint ${complaintId} updated by staff.`);
+    };
 
     useEffect(() => {
         const onLocationChange = () => {
@@ -3452,10 +3460,11 @@ const generateComplaintStatus = (category, priority, timeElapsed) => {
             return <FaqPage />;
         case '/staff-login':
             return <StaffLoginPage 
-                onBack={() => navigate('/')} 
-                complaints={complaints}
-                navigate={navigate}
-            />;
+                    onBack={() => navigate('/')} 
+                    complaints={complaints} // You are already passing this
+                    navigate={navigate}
+                    onUpdateComplaint={handleUpdateComplaint} // Pass the update function
+                />;
         default:
             return (
                 <div className="text-center py-20">

@@ -47,14 +47,14 @@ const StaffLoginPage = ({ onBack, complaints, navigate }) => {
         };
 
         const handleTouchMove = (e) => {
-            const touchY = e.touches[0].clientY;
-            const touchDiff = touchStartY - touchY;
-            
-            // Prevent overscroll on iOS
-            if (touchDiff > 0 && window.scrollY === 0) {
-                e.preventDefault();
-            }
-        };
+    // Only prevent overscroll in very specific edge cases
+    if (window.scrollY === 0 && e.touches[0].clientY > touchStartY + 100) {
+        const isFormElement = e.target.closest('input, textarea, select, button');
+        if (!isFormElement) {
+            e.preventDefault();
+        }
+    }
+};
 
         const handleOrientationChange = () => {
             // Handle orientation changes on mobile

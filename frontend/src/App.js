@@ -28,8 +28,6 @@ import railwayImage1 from './pexels-thangpu-paite-3365148-13110584.jpg';
 // Smart Category Suggestion System - Based on Railway Complaint Rules
 
 
-// Advanced text analysis functions
-// Enhanced text analysis function with subcategory and department assignment
 // Enhanced text analysis function with typo tolerance using Levenshtein Distance
 const analyzeComplaintText = (text) => {
     // Input validation
@@ -426,7 +424,6 @@ const testTypoTolerance = (text, keywords) => {
         }
     });
 };
-
 
 // Enhanced category selection with smart suggestions
 // Enhanced description textarea with analysis state tracking

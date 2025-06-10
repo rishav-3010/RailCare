@@ -22,13 +22,7 @@ import railwayImageBW from './pexels-raj-photography-83911134-20402113.jpg';
 import railwayImage1 from './pexels-thangpu-paite-3365148-13110584.jpg';
 
 
-// At the top of App.js, add this import
-
-// --- Enhanced Clean UI Components ---
-// Smart Category Suggestion System - Based on Railway Complaint Rules
-
-
-// Enhanced text analysis function with typo tolerance using Levenshtein Distance
+// Enhanced text analysis function with subcategory and department assignment
 const analyzeComplaintText = (text) => {
     // Input validation
     if (!text || typeof text !== 'string' || text.trim().length < 20) {
@@ -69,90 +63,96 @@ const analyzeComplaintText = (text) => {
                 let totalMatchScore = 0;
                 let contextualMatches = 0;
                 let exactMatches = 0;
-                let fuzzyMatches = 0;
                 
                 // Pre-normalize keywords for better performance
                 const normalizedKeywords = subcategory.keywords.map(keyword => ({
                     original: keyword,
                     normalized: keyword.toLowerCase(),
                     length: keyword.length,
-                    words: keyword.toLowerCase().split(/\s+/),
                     regex: new RegExp(`\\b${keyword.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`)
                 }));
                 
-                // Check for keyword matches with improved matching + typo tolerance
+                // Check for keyword matches with improved matching
                 normalizedKeywords.forEach(keywordData => {
-                    const { original, normalized, length, words, regex } = keywordData;
+                    const { original, normalized, length, regex } = keywordData;
                     
-                    // 1. Exact word boundary match
+                    // Use word boundary regex for more accurate matching
                     const exactMatch = regex.test(normalizedText);
-                    
-                    // 2. Partial match for longer keywords
                     const partialMatch = (normalized.length > 3) && normalizedText.includes(normalized);
+
                     
-                    // 3. Fuzzy matching with Levenshtein distance
-                    const fuzzyMatch = findFuzzyMatch(normalizedText, keywordData);
-                    
-                    if (exactMatch || partialMatch || fuzzyMatch.found) {
+                    if (exactMatch || partialMatch) {
                         matchCount++;
-                        matchedKeywords.push({
-                            keyword: original,
-                            matchType: exactMatch ? 'exact' : (partialMatch ? 'partial' : 'fuzzy'),
-                            fuzzyScore: fuzzyMatch.score,
-                            matchedText: fuzzyMatch.matchedText
-                        });
+                        matchedKeywords.push(original);
                         
                         // Enhanced weighting system
-                        let keywordWeight = calculateKeywordWeight(length, exactMatch, partialMatch, fuzzyMatch);
+                        let keywordWeight = 1;
+                        if (length > 20) keywordWeight = 4;        // Highly specific phrases
+                        else if (length > 15) keywordWeight = 3;   // Very specific
+                        else if (length > 10) keywordWeight = 2.5; // Moderately specific
+                        else if (length > 5) keywordWeight = 2;    // Somewhat specific
+                        else keywordWeight = 1.5;                 // Basic keywords
+                        
+                        // Bonus for exact word boundary matches
+                        if (exactMatch) {
+                            keywordWeight *= 1.3;
+                            exactMatches++;
+                        }
                         
                         totalMatchScore += keywordWeight;
                         
-                        // Count different types of matches
-                        if (exactMatch) {
-                            exactMatches++;
-                        } else if (fuzzyMatch.found) {
-                            fuzzyMatches++;
-                        }
-                        
                         // Enhanced strong match criteria
-                        if (length > 8 || exactMatch || (fuzzyMatch.found && fuzzyMatch.score > 0.8)) {
+                        if (length > 8 || exactMatch) {
                             strongMatches++;
                         }
                         
                         // Contextual matching bonus (for emergency/critical terms)
-                        if (categoryData.priority === 'critical' && (exactMatch || fuzzyMatch.score > 0.85)) {
+                        if (categoryData.priority === 'critical' && exactMatch) {
                             contextualMatches++;
                         }
                     }
                 });
                 
-                // Enhanced confidence calculation including fuzzy matches
+                // Enhanced confidence calculation
                 if (matchCount > 0) {
-                    const confidence = calculateEnhancedConfidence({
-                        categoryData,
-                        matchCount,
-                        totalMatchScore,
-                        strongMatches,
-                        exactMatches,
-                        fuzzyMatches,
-                        contextualMatches
-                    });
+                    // Base confidence from category
+                    let baseConfidence = categoryData.confidence || 0.7;
                     
-                    // Consistent threshold
+                    // Match count bonus (diminishing returns)
+                    let matchBonus = Math.min(matchCount * 0.12, 0.5);
+                    
+                    // Weighted score bonus
+                    let weightBonus = Math.min(totalMatchScore * 0.08, 0.35);
+                    
+                    // Strong match bonus
+                    let strongBonus = strongMatches > 0 ? Math.min(strongMatches * 0.05, 0.15) : 0;
+                    
+                    // Exact match bonus
+                    let exactBonus = exactMatches > 0 ? Math.min(exactMatches * 0.03, 0.1) : 0;
+                    
+                    // Contextual bonus for critical categories
+                    let contextualBonus = contextualMatches > 0 ? 0.1 : 0;
+                    
+                    // Calculate final confidence (capped at 1.0)
+                    const finalConfidence = Math.min(
+                        baseConfidence + matchBonus + weightBonus + strongBonus + exactBonus + contextualBonus,
+                        1.0
+                    );
+                    
+                    // Consistent threshold - use same value for filtering and final check
                     const CONFIDENCE_THRESHOLD = 0.65;
                     
-                    if (confidence >= CONFIDENCE_THRESHOLD) {
+                    if (finalConfidence >= CONFIDENCE_THRESHOLD) {
                         allSuggestions.push({
                             category: categoryName,
                             subcategory: subcategory.name,
                             department: subcategory.departments[0],
                             allDepartments: subcategory.departments,
-                            confidence,
+                            confidence: finalConfidence,
                             matchedKeywords,
                             matchCount,
                             strongMatches,
                             exactMatches,
-                            fuzzyMatches,
                             contextualMatches,
                             totalMatchScore,
                             priority: categoryData.priority || 'medium'
@@ -204,168 +204,6 @@ const analyzeComplaintText = (text) => {
     }
 };
 
-// Levenshtein Distance calculation - optimized version
-const levenshteinDistance = (str1, str2) => {
-    const matrix = Array(str2.length + 1).fill().map(() => Array(str1.length + 1).fill(0));
-    
-    // Initialize first row and column
-    for (let i = 0; i <= str1.length; i++) matrix[0][i] = i;
-    for (let j = 0; j <= str2.length; j++) matrix[j][0] = j;
-    
-    // Fill the matrix
-    for (let j = 1; j <= str2.length; j++) {
-        for (let i = 1; i <= str1.length; i++) {
-            const cost = str1[i - 1] === str2[j - 1] ? 0 : 1;
-            matrix[j][i] = Math.min(
-                matrix[j - 1][i] + 1,     // deletion
-                matrix[j][i - 1] + 1,     // insertion
-                matrix[j - 1][i - 1] + cost // substitution
-            );
-        }
-    }
-    
-    return matrix[str2.length][str1.length];
-};
-
-// Calculate similarity score (0-1, where 1 is identical)
-const calculateSimilarity = (str1, str2) => {
-    const maxLength = Math.max(str1.length, str2.length);
-    if (maxLength === 0) return 1;
-    
-    const distance = levenshteinDistance(str1, str2);
-    return 1 - (distance / maxLength);
-};
-
-// Find fuzzy matches in text for a given keyword
-const findFuzzyMatch = (text, keywordData) => {
-    const { normalized, words } = keywordData;
-    const textWords = text.split(/\s+/);
-    
-    // For single word keywords
-    if (words.length === 1) {
-        const keyword = words[0];
-        let bestMatch = { found: false, score: 0, matchedText: '' };
-        
-        // Check against individual words in text
-        textWords.forEach(word => {
-            if (word.length >= Math.max(3, keyword.length - 2)) { // Only check reasonable length words
-                const similarity = calculateSimilarity(keyword, word);
-                
-                // Configurable similarity threshold based on word length
-                const threshold = getThresholdForLength(keyword.length);
-                
-                if (similarity >= threshold && similarity > bestMatch.score) {
-                    bestMatch = {
-                        found: true,
-                        score: similarity,
-                        matchedText: word
-                    };
-                }
-            }
-        });
-        
-        return bestMatch;
-    } 
-    
-    // For multi-word keywords - sliding window approach
-    else {
-        let bestMatch = { found: false, score: 0, matchedText: '' };
-        const keywordText = words.join(' ');
-        
-        // Try different window sizes around the keyword length
-        for (let windowSize = Math.max(1, words.length - 1); windowSize <= words.length + 1; windowSize++) {
-            for (let i = 0; i <= textWords.length - windowSize; i++) {
-                const window = textWords.slice(i, i + windowSize).join(' ');
-                const similarity = calculateSimilarity(keywordText, window);
-                
-                // More lenient threshold for multi-word phrases
-                const threshold = Math.max(0.7, 1 - (0.15 * words.length));
-                
-                if (similarity >= threshold && similarity > bestMatch.score) {
-                    bestMatch = {
-                        found: true,
-                        score: similarity,
-                        matchedText: window
-                    };
-                }
-            }
-        }
-        
-        return bestMatch;
-    }
-};
-
-// Get similarity threshold based on word length
-const getThresholdForLength = (length) => {
-    if (length <= 4) return 0.85;      // Short words need high similarity
-    if (length <= 6) return 0.80;      // Medium words
-    if (length <= 10) return 0.75;     // Longer words
-    return 0.70;                       // Very long words - more tolerant
-};
-
-// Calculate keyword weight including fuzzy match considerations
-const calculateKeywordWeight = (length, exactMatch, partialMatch, fuzzyMatch) => {
-    let keywordWeight = 1;
-    
-    // Base weight by length
-    if (length > 20) keywordWeight = 4;        // Highly specific phrases
-    else if (length > 15) keywordWeight = 3;   // Very specific
-    else if (length > 10) keywordWeight = 2.5; // Moderately specific
-    else if (length > 5) keywordWeight = 2;    // Somewhat specific
-    else keywordWeight = 1.5;                 // Basic keywords
-    
-    // Match type bonuses
-    if (exactMatch) {
-        keywordWeight *= 1.3;  // Highest bonus for exact matches
-    } else if (partialMatch) {
-        keywordWeight *= 1.1;  // Medium bonus for partial matches
-    } else if (fuzzyMatch.found) {
-        // Graduated bonus based on fuzzy match quality
-        const fuzzyBonus = 0.8 + (fuzzyMatch.score * 0.3); // 0.8 to 1.1 multiplier
-        keywordWeight *= fuzzyBonus;
-    }
-    
-    return keywordWeight;
-};
-
-// Enhanced confidence calculation
-const calculateEnhancedConfidence = ({
-    categoryData,
-    matchCount,
-    totalMatchScore,
-    strongMatches,
-    exactMatches,
-    fuzzyMatches,
-    contextualMatches
-}) => {
-    // Base confidence from category
-    let baseConfidence = categoryData.confidence || 0.7;
-    
-    // Match count bonus (diminishing returns)
-    let matchBonus = Math.min(matchCount * 0.12, 0.5);
-    
-    // Weighted score bonus
-    let weightBonus = Math.min(totalMatchScore * 0.08, 0.35);
-    
-    // Strong match bonus
-    let strongBonus = strongMatches > 0 ? Math.min(strongMatches * 0.05, 0.15) : 0;
-    
-    // Exact match bonus (highest value)
-    let exactBonus = exactMatches > 0 ? Math.min(exactMatches * 0.03, 0.1) : 0;
-    
-    // Fuzzy match bonus (moderate value)
-    let fuzzyBonus = fuzzyMatches > 0 ? Math.min(fuzzyMatches * 0.02, 0.08) : 0;
-    
-    // Contextual bonus for critical categories
-    let contextualBonus = contextualMatches > 0 ? 0.1 : 0;
-    
-    // Calculate final confidence (capped at 1.0)
-    return Math.min(
-        baseConfidence + matchBonus + weightBonus + strongBonus + exactBonus + fuzzyBonus + contextualBonus,
-        1.0
-    );
-};
-
 // Enhanced helper function for debugging and testing
 const getDetailedAnalysis = (text) => {
     const result = analyzeComplaintText(text);
@@ -386,7 +224,6 @@ const getDetailedAnalysis = (text) => {
             totalKeywords: result.matchCount,
             strongMatches: result.strongMatches,
             exactMatches: result.exactMatches,
-            fuzzyMatches: result.fuzzyMatches,
             matchedKeywords: result.matchedKeywords.slice(0, 5) // Top 5 matches
         }
     };
@@ -402,29 +239,12 @@ const getTopSuggestions = (text, limit = 3) => {
     const allSuggestions = [];
     const priorityOrder = { 'critical': 0, 'urgent': 1, 'high': 2, 'medium': 3, 'low': 4 };
     
-    // Use the same enhanced analysis logic as the main function
-    // This would contain the same logic as analyzeComplaintText but return multiple results
+    // [Same analysis logic as above]
+    // ... 
     
+    // Return top N suggestions instead of just one
     return allSuggestions.slice(0, limit);
 };
-
-// Utility function to test typo tolerance
-const testTypoTolerance = (text, keywords) => {
-    console.log('Testing typo tolerance:');
-    keywords.forEach(keyword => {
-        const match = findFuzzyMatch(text.toLowerCase(), {
-            normalized: keyword.toLowerCase(),
-            words: keyword.toLowerCase().split(/\s+/)
-        });
-        
-        if (match.found) {
-            console.log(`✓ "${keyword}" matched "${match.matchedText}" (score: ${match.score.toFixed(2)})`);
-        } else {
-            console.log(`✗ "${keyword}" - no fuzzy match found`);
-        }
-    });
-};
-
 // Enhanced category selection with smart suggestions
 // Enhanced description textarea with analysis state tracking
 const SmartDescriptionTextarea = ({ formData, handleFormChange, onTextAnalysis, error }) => {

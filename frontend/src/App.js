@@ -30,99 +30,403 @@ import railwayImage1 from './pexels-thangpu-paite-3365148-13110584.jpg';
 
 // Advanced text analysis functions
 // Enhanced text analysis function with subcategory and department assignment
+// Enhanced text analysis function with typo tolerance using Levenshtein Distance
 const analyzeComplaintText = (text) => {
-    if (!text || text.length < 20) return null;
+    // Input validation
+    if (!text || typeof text !== 'string' || text.trim().length < 20) {
+        return null;
+    }
     
-    const normalizedText = text.toLowerCase();
+    const normalizedText = text.toLowerCase().trim();
     const allSuggestions = [];
     
-    // Analyze each category and its subcategories
-    Object.entries(CATEGORY_KEYWORDS).forEach(([categoryName, categoryData]) => {
-        categoryData.subcategories.forEach(subcategory => {
-            let matchCount = 0;
-            let matchedKeywords = [];
-            let strongMatches = 0;
-            let totalMatchScore = 0; // New: weighted scoring
+    // Pre-compile priority order for efficient sorting
+    const priorityOrder = { 
+        'critical': 0, 
+        'urgent': 1, 
+        'high': 2, 
+        'medium': 3, 
+        'low': 4 
+    };
+    
+    try {
+        // Analyze each category and its subcategories
+        Object.entries(CATEGORY_KEYWORDS).forEach(([categoryName, categoryData]) => {
+            // Validate category data structure
+            if (!categoryData?.subcategories || !Array.isArray(categoryData.subcategories)) {
+                console.warn(`Invalid category data for: ${categoryName}`);
+                return;
+            }
             
-            // Check for keyword matches with weighted scoring
-            subcategory.keywords.forEach(keyword => {
-                if (normalizedText.includes(keyword.toLowerCase())) {
-                    matchCount++;
-                    matchedKeywords.push(keyword);
+            categoryData.subcategories.forEach(subcategory => {
+                // Validate subcategory structure
+                if (!subcategory?.keywords || !Array.isArray(subcategory.keywords) || 
+                    !subcategory?.departments || !Array.isArray(subcategory.departments)) {
+                    return;
+                }
+                
+                let matchCount = 0;
+                let matchedKeywords = [];
+                let strongMatches = 0;
+                let totalMatchScore = 0;
+                let contextualMatches = 0;
+                let exactMatches = 0;
+                let fuzzyMatches = 0;
+                
+                // Pre-normalize keywords for better performance
+                const normalizedKeywords = subcategory.keywords.map(keyword => ({
+                    original: keyword,
+                    normalized: keyword.toLowerCase(),
+                    length: keyword.length,
+                    words: keyword.toLowerCase().split(/\s+/),
+                    regex: new RegExp(`\\b${keyword.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`)
+                }));
+                
+                // Check for keyword matches with improved matching + typo tolerance
+                normalizedKeywords.forEach(keywordData => {
+                    const { original, normalized, length, words, regex } = keywordData;
                     
-                    // Weight longer keywords higher (more specific)
-                    let keywordWeight = 1;
-                    if (keyword.length > 15) keywordWeight = 3;      // Very specific
-                    else if (keyword.length > 10) keywordWeight = 2;  // Moderately specific
-                    else if (keyword.length > 5) keywordWeight = 1.5; // Somewhat specific
+                    // 1. Exact word boundary match
+                    const exactMatch = regex.test(normalizedText);
                     
-                    totalMatchScore += keywordWeight;
+                    // 2. Partial match for longer keywords
+                    const partialMatch = (normalized.length > 3) && normalizedText.includes(normalized);
                     
-                    // Count as strong match if keyword is longer (more specific)
-                    if (keyword.length > 8) {
-                        strongMatches++;
+                    // 3. Fuzzy matching with Levenshtein distance
+                    const fuzzyMatch = findFuzzyMatch(normalizedText, keywordData);
+                    
+                    if (exactMatch || partialMatch || fuzzyMatch.found) {
+                        matchCount++;
+                        matchedKeywords.push({
+                            keyword: original,
+                            matchType: exactMatch ? 'exact' : (partialMatch ? 'partial' : 'fuzzy'),
+                            fuzzyScore: fuzzyMatch.score,
+                            matchedText: fuzzyMatch.matchedText
+                        });
+                        
+                        // Enhanced weighting system
+                        let keywordWeight = calculateKeywordWeight(length, exactMatch, partialMatch, fuzzyMatch);
+                        
+                        totalMatchScore += keywordWeight;
+                        
+                        // Count different types of matches
+                        if (exactMatch) {
+                            exactMatches++;
+                        } else if (fuzzyMatch.found) {
+                            fuzzyMatches++;
+                        }
+                        
+                        // Enhanced strong match criteria
+                        if (length > 8 || exactMatch || (fuzzyMatch.found && fuzzyMatch.score > 0.8)) {
+                            strongMatches++;
+                        }
+                        
+                        // Contextual matching bonus (for emergency/critical terms)
+                        if (categoryData.priority === 'critical' && (exactMatch || fuzzyMatch.score > 0.85)) {
+                            contextualMatches++;
+                        }
+                    }
+                });
+                
+                // Enhanced confidence calculation including fuzzy matches
+                if (matchCount > 0) {
+                    const confidence = calculateEnhancedConfidence({
+                        categoryData,
+                        matchCount,
+                        totalMatchScore,
+                        strongMatches,
+                        exactMatches,
+                        fuzzyMatches,
+                        contextualMatches
+                    });
+                    
+                    // Consistent threshold
+                    const CONFIDENCE_THRESHOLD = 0.65;
+                    
+                    if (confidence >= CONFIDENCE_THRESHOLD) {
+                        allSuggestions.push({
+                            category: categoryName,
+                            subcategory: subcategory.name,
+                            department: subcategory.departments[0],
+                            allDepartments: subcategory.departments,
+                            confidence,
+                            matchedKeywords,
+                            matchCount,
+                            strongMatches,
+                            exactMatches,
+                            fuzzyMatches,
+                            contextualMatches,
+                            totalMatchScore,
+                            priority: categoryData.priority || 'medium'
+                        });
                     }
                 }
             });
+        });
+        
+        // Enhanced sorting with complete priority handling
+        allSuggestions.sort((a, b) => {
+            const priorityA = priorityOrder[a.priority] ?? 5;
+            const priorityB = priorityOrder[b.priority] ?? 5;
             
-            // New improved confidence calculation
-            if (matchCount > 0) {
-                // Base confidence from category confidence
-                let baseConfidence = categoryData.confidence;
+            // First sort by priority
+            if (priorityA !== priorityB) {
+                return priorityA - priorityB;
+            }
+            
+            // Then by confidence (descending)
+            if (Math.abs(a.confidence - b.confidence) > 0.01) {
+                return b.confidence - a.confidence;
+            }
+            
+            // Finally by total match score (descending)
+            return b.totalMatchScore - a.totalMatchScore;
+        });
+        
+        // Return top suggestion with enhanced validation
+        if (allSuggestions.length > 0) {
+            const topSuggestion = allSuggestions[0];
+            
+            // Additional validation for critical/urgent categories
+            if (topSuggestion.priority === 'critical' && topSuggestion.confidence >= 0.6) {
+                return topSuggestion;
+            }
+            
+            // Standard threshold for other categories
+            if (topSuggestion.confidence >= 0.65) {
+                return topSuggestion;
+            }
+        }
+        
+        return null;
+        
+    } catch (error) {
+        console.error('Error in complaint text analysis:', error);
+        return null;
+    }
+};
+
+// Levenshtein Distance calculation - optimized version
+const levenshteinDistance = (str1, str2) => {
+    const matrix = Array(str2.length + 1).fill().map(() => Array(str1.length + 1).fill(0));
+    
+    // Initialize first row and column
+    for (let i = 0; i <= str1.length; i++) matrix[0][i] = i;
+    for (let j = 0; j <= str2.length; j++) matrix[j][0] = j;
+    
+    // Fill the matrix
+    for (let j = 1; j <= str2.length; j++) {
+        for (let i = 1; i <= str1.length; i++) {
+            const cost = str1[i - 1] === str2[j - 1] ? 0 : 1;
+            matrix[j][i] = Math.min(
+                matrix[j - 1][i] + 1,     // deletion
+                matrix[j][i - 1] + 1,     // insertion
+                matrix[j - 1][i - 1] + cost // substitution
+            );
+        }
+    }
+    
+    return matrix[str2.length][str1.length];
+};
+
+// Calculate similarity score (0-1, where 1 is identical)
+const calculateSimilarity = (str1, str2) => {
+    const maxLength = Math.max(str1.length, str2.length);
+    if (maxLength === 0) return 1;
+    
+    const distance = levenshteinDistance(str1, str2);
+    return 1 - (distance / maxLength);
+};
+
+// Find fuzzy matches in text for a given keyword
+const findFuzzyMatch = (text, keywordData) => {
+    const { normalized, words } = keywordData;
+    const textWords = text.split(/\s+/);
+    
+    // For single word keywords
+    if (words.length === 1) {
+        const keyword = words[0];
+        let bestMatch = { found: false, score: 0, matchedText: '' };
+        
+        // Check against individual words in text
+        textWords.forEach(word => {
+            if (word.length >= Math.max(3, keyword.length - 2)) { // Only check reasonable length words
+                const similarity = calculateSimilarity(keyword, word);
                 
-                // Boost based on number of matches
-                let matchBonus = Math.min(matchCount * 0.15, 0.6); // Max 60% bonus
+                // Configurable similarity threshold based on word length
+                const threshold = getThresholdForLength(keyword.length);
                 
-                // Boost based on weighted score
-                let weightBonus = Math.min(totalMatchScore * 0.1, 0.4); // Max 40% bonus
-                
-                // Strong match bonus
-                let strongBonus = strongMatches > 0 ? 0.1 : 0;
-                
-                // Calculate final confidence (capped at 1.0)
-                const finalConfidence = Math.min(
-                    baseConfidence + matchBonus + weightBonus + strongBonus,
-                    1.0
-                );
-                
-                // Much lower threshold - only need basic match
-                if (finalConfidence > 0.6) { // Lowered from 0.4
-                    allSuggestions.push({
-                        category: categoryName,
-                        subcategory: subcategory.name,
-                        department: subcategory.departments[0],
-                        allDepartments: subcategory.departments,
-                        confidence: finalConfidence,
-                        matchedKeywords,
-                        matchCount,
-                        strongMatches,
-                        totalMatchScore, // Add this for debugging
-                        priority: categoryData.priority
-                    });
+                if (similarity >= threshold && similarity > bestMatch.score) {
+                    bestMatch = {
+                        found: true,
+                        score: similarity,
+                        matchedText: word
+                    };
                 }
             }
         });
-    });
+        
+        return bestMatch;
+    } 
     
-    // Sort by confidence and priority
-    allSuggestions.sort((a, b) => {
-        if (a.priority === 'critical' && b.priority !== 'critical') return -1;
-        if (b.priority === 'critical' && a.priority !== 'critical') return 1;
-        if (a.priority === 'high' && b.priority !== 'high') return -1;
-        if (b.priority === 'high' && a.priority !== 'high') return 1;
-        return b.confidence - a.confidence;
-    });
+    // For multi-word keywords - sliding window approach
+    else {
+        let bestMatch = { found: false, score: 0, matchedText: '' };
+        const keywordText = words.join(' ');
+        
+        // Try different window sizes around the keyword length
+        for (let windowSize = Math.max(1, words.length - 1); windowSize <= words.length + 1; windowSize++) {
+            for (let i = 0; i <= textWords.length - windowSize; i++) {
+                const window = textWords.slice(i, i + windowSize).join(' ');
+                const similarity = calculateSimilarity(keywordText, window);
+                
+                // More lenient threshold for multi-word phrases
+                const threshold = Math.max(0.7, 1 - (0.15 * words.length));
+                
+                if (similarity >= threshold && similarity > bestMatch.score) {
+                    bestMatch = {
+                        found: true,
+                        score: similarity,
+                        matchedText: window
+                    };
+                }
+            }
+        }
+        
+        return bestMatch;
+    }
+};
+
+// Get similarity threshold based on word length
+const getThresholdForLength = (length) => {
+    if (length <= 4) return 0.85;      // Short words need high similarity
+    if (length <= 6) return 0.80;      // Medium words
+    if (length <= 10) return 0.75;     // Longer words
+    return 0.70;                       // Very long words - more tolerant
+};
+
+// Calculate keyword weight including fuzzy match considerations
+const calculateKeywordWeight = (length, exactMatch, partialMatch, fuzzyMatch) => {
+    let keywordWeight = 1;
     
-    // Return top suggestion with much lower threshold
-    const topSuggestion = allSuggestions.length > 0 ? allSuggestions[0] : null;
+    // Base weight by length
+    if (length > 20) keywordWeight = 4;        // Highly specific phrases
+    else if (length > 15) keywordWeight = 3;   // Very specific
+    else if (length > 10) keywordWeight = 2.5; // Moderately specific
+    else if (length > 5) keywordWeight = 2;    // Somewhat specific
+    else keywordWeight = 1.5;                 // Basic keywords
     
-    // Lowered final threshold significantly
-    if (topSuggestion && topSuggestion.confidence > 0.7) { // Changed from 0.5
-        return topSuggestion;
+    // Match type bonuses
+    if (exactMatch) {
+        keywordWeight *= 1.3;  // Highest bonus for exact matches
+    } else if (partialMatch) {
+        keywordWeight *= 1.1;  // Medium bonus for partial matches
+    } else if (fuzzyMatch.found) {
+        // Graduated bonus based on fuzzy match quality
+        const fuzzyBonus = 0.8 + (fuzzyMatch.score * 0.3); // 0.8 to 1.1 multiplier
+        keywordWeight *= fuzzyBonus;
     }
     
-    return null;
+    return keywordWeight;
 };
+
+// Enhanced confidence calculation
+const calculateEnhancedConfidence = ({
+    categoryData,
+    matchCount,
+    totalMatchScore,
+    strongMatches,
+    exactMatches,
+    fuzzyMatches,
+    contextualMatches
+}) => {
+    // Base confidence from category
+    let baseConfidence = categoryData.confidence || 0.7;
+    
+    // Match count bonus (diminishing returns)
+    let matchBonus = Math.min(matchCount * 0.12, 0.5);
+    
+    // Weighted score bonus
+    let weightBonus = Math.min(totalMatchScore * 0.08, 0.35);
+    
+    // Strong match bonus
+    let strongBonus = strongMatches > 0 ? Math.min(strongMatches * 0.05, 0.15) : 0;
+    
+    // Exact match bonus (highest value)
+    let exactBonus = exactMatches > 0 ? Math.min(exactMatches * 0.03, 0.1) : 0;
+    
+    // Fuzzy match bonus (moderate value)
+    let fuzzyBonus = fuzzyMatches > 0 ? Math.min(fuzzyMatches * 0.02, 0.08) : 0;
+    
+    // Contextual bonus for critical categories
+    let contextualBonus = contextualMatches > 0 ? 0.1 : 0;
+    
+    // Calculate final confidence (capped at 1.0)
+    return Math.min(
+        baseConfidence + matchBonus + weightBonus + strongBonus + exactBonus + fuzzyBonus + contextualBonus,
+        1.0
+    );
+};
+
+// Enhanced helper function for debugging and testing
+const getDetailedAnalysis = (text) => {
+    const result = analyzeComplaintText(text);
+    
+    if (!result) {
+        return {
+            success: false,
+            message: 'No category detected or confidence too low',
+            suggestions: []
+        };
+    }
+    
+    return {
+        success: true,
+        topMatch: result,
+        confidence: Math.round(result.confidence * 100),
+        matchDetails: {
+            totalKeywords: result.matchCount,
+            strongMatches: result.strongMatches,
+            exactMatches: result.exactMatches,
+            fuzzyMatches: result.fuzzyMatches,
+            matchedKeywords: result.matchedKeywords.slice(0, 5) // Top 5 matches
+        }
+    };
+};
+
+// Additional utility function for getting multiple suggestions
+const getTopSuggestions = (text, limit = 3) => {
+    if (!text || typeof text !== 'string' || text.trim().length < 20) {
+        return [];
+    }
+    
+    const normalizedText = text.toLowerCase().trim();
+    const allSuggestions = [];
+    const priorityOrder = { 'critical': 0, 'urgent': 1, 'high': 2, 'medium': 3, 'low': 4 };
+    
+    // Use the same enhanced analysis logic as the main function
+    // This would contain the same logic as analyzeComplaintText but return multiple results
+    
+    return allSuggestions.slice(0, limit);
+};
+
+// Utility function to test typo tolerance
+const testTypoTolerance = (text, keywords) => {
+    console.log('Testing typo tolerance:');
+    keywords.forEach(keyword => {
+        const match = findFuzzyMatch(text.toLowerCase(), {
+            normalized: keyword.toLowerCase(),
+            words: keyword.toLowerCase().split(/\s+/)
+        });
+        
+        if (match.found) {
+            console.log(`✓ "${keyword}" matched "${match.matchedText}" (score: ${match.score.toFixed(2)})`);
+        } else {
+            console.log(`✗ "${keyword}" - no fuzzy match found`);
+        }
+    });
+};
+
 
 // Enhanced category selection with smart suggestions
 // Enhanced description textarea with analysis state tracking

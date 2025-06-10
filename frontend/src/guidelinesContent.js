@@ -1,6 +1,6 @@
 // guidelinesContent.js
 export const guidelinesContent = `
-# Railwaay Complaint Classification System - Documentation & Guidelines
+# Railway Complaint Classification System - Documentation & Guidelines
 
 ## Overview
 

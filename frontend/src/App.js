@@ -21,497 +21,186 @@ import railwayImage from './image.png';
 import railwayImageBW from './pexels-raj-photography-83911134-20402113.jpg';
 import railwayImage1 from './pexels-thangpu-paite-3365148-13110584.jpg';
 
-
-// Enhanced text analysis function with subcategory and department assignment
-const analyzeComplaintText = (text) => {
-    // Input validation
-    if (!text || typeof text !== 'string' || text.trim().length < 20) {
-        return null;
-    }
-    
-    const normalizedText = text.toLowerCase().trim();
-    const allSuggestions = [];
-    
-    // Pre-compile priority order for efficient sorting
-    const priorityOrder = { 
-        'critical': 0, 
-        'urgent': 1, 
-        'high': 2, 
-        'medium': 3, 
-        'low': 4 
-    };
-    
-    try {
-        // Analyze each category and its subcategories
-        Object.entries(CATEGORY_KEYWORDS).forEach(([categoryName, categoryData]) => {
-            // Validate category data structure
-            if (!categoryData?.subcategories || !Array.isArray(categoryData.subcategories)) {
-                console.warn(`Invalid category data for: ${categoryName}`);
-                return;
-            }
-            
-            categoryData.subcategories.forEach(subcategory => {
-                // Validate subcategory structure
-                if (!subcategory?.keywords || !Array.isArray(subcategory.keywords) || 
-                    !subcategory?.departments || !Array.isArray(subcategory.departments)) {
-                    return;
-                }
-                
-                let matchCount = 0;
-                let matchedKeywords = [];
-                let strongMatches = 0;
-                let totalMatchScore = 0;
-                let contextualMatches = 0;
-                let exactMatches = 0;
-                
-                // Pre-normalize keywords for better performance
-                const normalizedKeywords = subcategory.keywords.map(keyword => ({
-                    original: keyword,
-                    normalized: keyword.toLowerCase(),
-                    length: keyword.length,
-                    regex: new RegExp(`\\b${keyword.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`)
-                }));
-                
-                // Check for keyword matches with improved matching
-                normalizedKeywords.forEach(keywordData => {
-                    const { original, normalized, length, regex } = keywordData;
-                    
-                    // Use word boundary regex for more accurate matching
-                    const exactMatch = regex.test(normalizedText);
-                    const partialMatch = (normalized.length > 3) && normalizedText.includes(normalized);
-
-                    
-                    if (exactMatch || partialMatch) {
-                        matchCount++;
-                        matchedKeywords.push(original);
-                        
-                        // Enhanced weighting system
-                        let keywordWeight = 1;
-                        if (length > 20) keywordWeight = 4;        // Highly specific phrases
-                        else if (length > 15) keywordWeight = 3;   // Very specific
-                        else if (length > 10) keywordWeight = 2.5; // Moderately specific
-                        else if (length > 5) keywordWeight = 2;    // Somewhat specific
-                        else keywordWeight = 1.5;                 // Basic keywords
-                        
-                        // Bonus for exact word boundary matches
-                        if (exactMatch) {
-                            keywordWeight *= 1.3;
-                            exactMatches++;
-                        }
-                        
-                        totalMatchScore += keywordWeight;
-                        
-                        // Enhanced strong match criteria
-                        if (length > 8 || exactMatch) {
-                            strongMatches++;
-                        }
-                        
-                        // Contextual matching bonus (for emergency/critical terms)
-                        if (categoryData.priority === 'critical' && exactMatch) {
-                            contextualMatches++;
-                        }
-                    }
-                });
-                
-                // Enhanced confidence calculation
-                if (matchCount > 0) {
-                    // Base confidence from category
-                    let baseConfidence = categoryData.confidence || 0.7;
-                    
-                    // Match count bonus (diminishing returns)
-                    let matchBonus = Math.min(matchCount * 0.12, 0.5);
-                    
-                    // Weighted score bonus
-                    let weightBonus = Math.min(totalMatchScore * 0.08, 0.35);
-                    
-                    // Strong match bonus
-                    let strongBonus = strongMatches > 0 ? Math.min(strongMatches * 0.05, 0.15) : 0;
-                    
-                    // Exact match bonus
-                    let exactBonus = exactMatches > 0 ? Math.min(exactMatches * 0.03, 0.1) : 0;
-                    
-                    // Contextual bonus for critical categories
-                    let contextualBonus = contextualMatches > 0 ? 0.1 : 0;
-                    
-                    // Calculate final confidence (capped at 1.0)
-                    const finalConfidence = Math.min(
-                        baseConfidence + matchBonus + weightBonus + strongBonus + exactBonus + contextualBonus,
-                        1.0
-                    );
-                    
-                    // Consistent threshold - use same value for filtering and final check
-                    const CONFIDENCE_THRESHOLD = 0.65;
-                    
-                    if (finalConfidence >= CONFIDENCE_THRESHOLD) {
-                        allSuggestions.push({
-                            category: categoryName,
-                            subcategory: subcategory.name,
-                            department: subcategory.departments[0],
-                            allDepartments: subcategory.departments,
-                            confidence: finalConfidence,
-                            matchedKeywords,
-                            matchCount,
-                            strongMatches,
-                            exactMatches,
-                            contextualMatches,
-                            totalMatchScore,
-                            priority: categoryData.priority || 'medium'
-                        });
-                    }
-                }
-            });
-        });
-        
-        // Enhanced sorting with complete priority handling
-        allSuggestions.sort((a, b) => {
-            const priorityA = priorityOrder[a.priority] ?? 5;
-            const priorityB = priorityOrder[b.priority] ?? 5;
-            
-            // First sort by priority
-            if (priorityA !== priorityB) {
-                return priorityA - priorityB;
-            }
-            
-            // Then by confidence (descending)
-            if (Math.abs(a.confidence - b.confidence) > 0.01) {
-                return b.confidence - a.confidence;
-            }
-            
-            // Finally by total match score (descending)
-            return b.totalMatchScore - a.totalMatchScore;
-        });
-        
-        // Return top suggestion with enhanced validation
-        if (allSuggestions.length > 0) {
-            const topSuggestion = allSuggestions[0];
-            
-            // Additional validation for critical/urgent categories
-            if (topSuggestion.priority === 'critical' && topSuggestion.confidence >= 0.6) {
-                return topSuggestion;
-            }
-            
-            // Standard threshold for other categories
-            if (topSuggestion.confidence >= 0.65) {
-                return topSuggestion;
-            }
-        }
-        
-        return null;
-        
-    } catch (error) {
-        console.error('Error in complaint text analysis:', error);
-        return null;
-    }
-};
-
-// Enhanced helper function for debugging and testing
-const getDetailedAnalysis = (text) => {
-    const result = analyzeComplaintText(text);
-    
-    if (!result) {
-        return {
-            success: false,
-            message: 'No category detected or confidence too low',
-            suggestions: []
-        };
-    }
-    
-    return {
-        success: true,
-        topMatch: result,
-        confidence: Math.round(result.confidence * 100),
-        matchDetails: {
-            totalKeywords: result.matchCount,
-            strongMatches: result.strongMatches,
-            exactMatches: result.exactMatches,
-            matchedKeywords: result.matchedKeywords.slice(0, 5) // Top 5 matches
-        }
-    };
-};
-
-// Additional utility function for getting multiple suggestions
-const getTopSuggestions = (text, limit = 3) => {
-    if (!text || typeof text !== 'string' || text.trim().length < 20) {
-        return [];
-    }
-    
-    const normalizedText = text.toLowerCase().trim();
-    const allSuggestions = [];
-    const priorityOrder = { 'critical': 0, 'urgent': 1, 'high': 2, 'medium': 3, 'low': 4 };
-    
-    // [Same analysis logic as above]
-    // ... 
-    
-    // Return top N suggestions instead of just one
-    return allSuggestions.slice(0, limit);
-};
-
-
-
 // ++++++++++++++++++++=alternate algo++++++++++++++++++++
-// class OptimizedComplaintAnalyzer {
-//     constructor() {
-//         this.regexCache = new Map();
-//         this.keywordIndex = new Map();
-//         this.categoryPriorities = { 'critical': 0, 'urgent': 1, 'high': 2, 'medium': 3, 'low': 4 };
-//         this.confidenceThresholds = {
-//             'critical': 0.55,
-//             'urgent': 0.65,
-//             'high': 0.70,
-//             'medium': 0.75
-//         };
-//         this.initializeOptimizedStructures();
+// const analyzeComplaintText = (text) => {
+//     // Input validation
+//     if (!text || typeof text !== 'string' || text.trim().length < 20) {
+//         return null;
 //     }
-
-//     initializeOptimizedStructures() {
-//         // Pre-process and index all keywords for faster lookup
+    
+//     const normalizedText = text.toLowerCase().trim();
+//     const allSuggestions = [];
+    
+//     // Pre-compile priority order for efficient sorting
+//     const priorityOrder = { 
+//         'critical': 0, 
+//         'urgent': 1, 
+//         'high': 2, 
+//         'medium': 3, 
+//         'low': 4 
+//     };
+    
+//     try {
+//         // Analyze each category and its subcategories
 //         Object.entries(CATEGORY_KEYWORDS).forEach(([categoryName, categoryData]) => {
-//             if (!categoryData?.subcategories) return;
-
+//             // Validate category data structure
+//             if (!categoryData?.subcategories || !Array.isArray(categoryData.subcategories)) {
+//                 console.warn(`Invalid category data for: ${categoryName}`);
+//                 return;
+//             }
+            
 //             categoryData.subcategories.forEach(subcategory => {
-//                 if (!subcategory?.keywords) return;
+//                 // Validate subcategory structure
+//                 if (!subcategory?.keywords || !Array.isArray(subcategory.keywords) || 
+//                     !subcategory?.departments || !Array.isArray(subcategory.departments)) {
+//                     return;
+//                 }
+                
+//                 let matchCount = 0;
+//                 let matchedKeywords = [];
+//                 let strongMatches = 0;
+//                 let totalMatchScore = 0;
+//                 let contextualMatches = 0;
+//                 let exactMatches = 0;
+                
+//                 // Pre-normalize keywords for better performance
+//                 const normalizedKeywords = subcategory.keywords.map(keyword => ({
+//                     original: keyword,
+//                     normalized: keyword.toLowerCase(),
+//                     length: keyword.length,
+//                     regex: new RegExp(`\\b${keyword.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`)
+//                 }));
+                
+//                 // Check for keyword matches with improved matching
+//                 normalizedKeywords.forEach(keywordData => {
+//                     const { original, normalized, length, regex } = keywordData;
+                    
+//                     // Use word boundary regex for more accurate matching
+//                     const exactMatch = regex.test(normalizedText);
+//                     const partialMatch = (normalized.length > 3) && normalizedText.includes(normalized);
 
-//                 // Create reverse index for faster keyword lookup
-//                 subcategory.keywords.forEach(keyword => {
-//                     const normalizedKeyword = keyword.toLowerCase();
                     
-//                     if (!this.keywordIndex.has(normalizedKeyword)) {
-//                         this.keywordIndex.set(normalizedKeyword, []);
+//                     if (exactMatch || partialMatch) {
+//                         matchCount++;
+//                         matchedKeywords.push(original);
+                        
+//                         // Enhanced weighting system
+//                         let keywordWeight = 1;
+//                         if (length > 20) keywordWeight = 4;        // Highly specific phrases
+//                         else if (length > 15) keywordWeight = 3;   // Very specific
+//                         else if (length > 10) keywordWeight = 2.5; // Moderately specific
+//                         else if (length > 5) keywordWeight = 2;    // Somewhat specific
+//                         else keywordWeight = 1.5;                 // Basic keywords
+                        
+//                         // Bonus for exact word boundary matches
+//                         if (exactMatch) {
+//                             keywordWeight *= 1.3;
+//                             exactMatches++;
+//                         }
+                        
+//                         totalMatchScore += keywordWeight;
+                        
+//                         // Enhanced strong match criteria
+//                         if (length > 8 || exactMatch) {
+//                             strongMatches++;
+//                         }
+                        
+//                         // Contextual matching bonus (for emergency/critical terms)
+//                         if (categoryData.priority === 'critical' && exactMatch) {
+//                             contextualMatches++;
+//                         }
 //                     }
-                    
-//                     this.keywordIndex.get(normalizedKeyword).push({
-//                         category: categoryName,
-//                         subcategory: subcategory.name,
-//                         departments: subcategory.departments,
-//                         priority: categoryData.priority,
-//                         confidence: categoryData.confidence,
-//                         weight: this.calculateKeywordWeight(keyword.length),
-//                         regex: this.getOrCreateRegex(normalizedKeyword)
-//                     });
 //                 });
+                
+//                 // Enhanced confidence calculation
+//                 if (matchCount > 0) {
+//                     // Base confidence from category
+//                     let baseConfidence = categoryData.confidence || 0.7;
+                    
+//                     // Match count bonus (diminishing returns)
+//                     let matchBonus = Math.min(matchCount * 0.12, 0.5);
+                    
+//                     // Weighted score bonus
+//                     let weightBonus = Math.min(totalMatchScore * 0.08, 0.35);
+                    
+//                     // Strong match bonus
+//                     let strongBonus = strongMatches > 0 ? Math.min(strongMatches * 0.05, 0.15) : 0;
+                    
+//                     // Exact match bonus
+//                     let exactBonus = exactMatches > 0 ? Math.min(exactMatches * 0.03, 0.1) : 0;
+                    
+//                     // Contextual bonus for critical categories
+//                     let contextualBonus = contextualMatches > 0 ? 0.1 : 0;
+                    
+//                     // Calculate final confidence (capped at 1.0)
+//                     const finalConfidence = Math.min(
+//                         baseConfidence + matchBonus + weightBonus + strongBonus + exactBonus + contextualBonus,
+//                         1.0
+//                     );
+                    
+//                     // Consistent threshold - use same value for filtering and final check
+//                     const CONFIDENCE_THRESHOLD = 0.65;
+                    
+//                     if (finalConfidence >= CONFIDENCE_THRESHOLD) {
+//                         allSuggestions.push({
+//                             category: categoryName,
+//                             subcategory: subcategory.name,
+//                             department: subcategory.departments[0],
+//                             allDepartments: subcategory.departments,
+//                             confidence: finalConfidence,
+//                             matchedKeywords,
+//                             matchCount,
+//                             strongMatches,
+//                             exactMatches,
+//                             contextualMatches,
+//                             totalMatchScore,
+//                             priority: categoryData.priority || 'medium'
+//                         });
+//                     }
+//                 }
 //             });
 //         });
-//     }
-
-//     getOrCreateRegex(keyword) {
-//         if (!this.regexCache.has(keyword)) {
-//             const escapedKeyword = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-//             this.regexCache.set(keyword, new RegExp(`\\b${escapedKeyword}\\b`, 'gi'));
-//         }
-//         return this.regexCache.get(keyword);
-//     }
-
-//     calculateKeywordWeight(length) {
-//         if (length > 20) return 4;
-//         if (length > 15) return 3;
-//         if (length > 10) return 2.5;
-//         if (length > 5) return 2;
-//         return 1.5;
-//     }
-
-//     analyzeComplaintText(text) {
-//         // Enhanced input validation
-//         if (!text || typeof text !== 'string' || text.trim().length < 10) {
-//             return null;
-//         }
-
-//         const normalizedText = text.toLowerCase().trim();
-//         const words = normalizedText.split(/\s+/);
-//         const matchResults = new Map();
-
-//         try {
-//             // Use set for faster word lookup
-//             const wordSet = new Set(words);
-            
-//             // Multi-pass analysis for better accuracy
-//             this.performExactMatching(normalizedText, matchResults);
-//             this.performPhraseMatching(normalizedText, matchResults);
-//             this.performPartialMatching(normalizedText, wordSet, matchResults);
-
-//             // Calculate final scores and return best match
-//             return this.calculateBestMatch(matchResults, normalizedText);
-
-//         } catch (error) {
-//             console.error('Error in optimized complaint analysis:', error);
-//             return null;
-//         }
-//     }
-
-//     performExactMatching(text, results) {
-//         // Optimized exact matching using pre-compiled regex
-//         for (const [keyword, categoryInfos] of this.keywordIndex) {
-//             const regex = this.getOrCreateRegex(keyword);
-//             const matches = text.match(regex);
-            
-//             if (matches) {
-//                 categoryInfos.forEach(info => {
-//                     const key = `${info.category}-${info.subcategory}`;
-//                     if (!results.has(key)) {
-//                         results.set(key, {
-//                             ...info,
-//                             exactMatches: 0,
-//                             partialMatches: 0,
-//                             matchedKeywords: [],
-//                             totalScore: 0
-//                         });
-//                     }
-                    
-//                     const result = results.get(key);
-//                     result.exactMatches += matches.length;
-//                     result.matchedKeywords.push(keyword);
-//                     result.totalScore += matches.length * info.weight * 1.3; // Exact match bonus
-//                 });
-//             }
-//         }
-//     }
-
-//     performPhraseMatching(text, results) {
-//         // Enhanced phrase matching for better context
-//         const phrases = Array.from(this.keywordIndex.keys()).filter(k => k.includes(' '));
         
-//         phrases.forEach(phrase => {
-//             if (text.includes(phrase)) {
-//                 const categoryInfos = this.keywordIndex.get(phrase);
-//                 categoryInfos.forEach(info => {
-//                     const key = `${info.category}-${info.subcategory}`;
-//                     if (results.has(key)) {
-//                         const result = results.get(key);
-//                         result.totalScore += info.weight * 2; // Phrase bonus
-//                     }
-//                 });
+//         // Enhanced sorting with complete priority handling
+//         allSuggestions.sort((a, b) => {
+//             const priorityA = priorityOrder[a.priority] ?? 5;
+//             const priorityB = priorityOrder[b.priority] ?? 5;
+            
+//             // First sort by priority
+//             if (priorityA !== priorityB) {
+//                 return priorityA - priorityB;
 //             }
+            
+//             // Then by confidence (descending)
+//             if (Math.abs(a.confidence - b.confidence) > 0.01) {
+//                 return b.confidence - a.confidence;
+//             }
+            
+//             // Finally by total match score (descending)
+//             return b.totalMatchScore - a.totalMatchScore;
 //         });
-//     }
-
-//     performPartialMatching(text, wordSet, results) {
-//         // Optimized partial matching with early termination
-//         const minLength = 4;
         
-//         for (const [keyword, categoryInfos] of this.keywordIndex) {
-//             if (keyword.length < minLength || keyword.includes(' ')) continue;
+//         // Return top suggestion with enhanced validation
+//         if (allSuggestions.length > 0) {
+//             const topSuggestion = allSuggestions[0];
             
-//             // Check if any word contains the keyword
-//             let found = false;
-//             for (const word of wordSet) {
-//                 if (word.includes(keyword)) {
-//                     found = true;
-//                     break;
-//                 }
+//             // Additional validation for critical/urgent categories
+//             if (topSuggestion.priority === 'critical' && topSuggestion.confidence >= 0.6) {
+//                 return topSuggestion;
 //             }
             
-//             if (found) {
-//                 categoryInfos.forEach(info => {
-//                     const key = `${info.category}-${info.subcategory}`;
-//                     if (!results.has(key)) {
-//                         results.set(key, {
-//                             ...info,
-//                             exactMatches: 0,
-//                             partialMatches: 0,
-//                             matchedKeywords: [],
-//                             totalScore: 0
-//                         });
-//                     }
-                    
-//                     const result = results.get(key);
-//                     result.partialMatches++;
-//                     result.totalScore += info.weight * 0.7; // Partial match penalty
-//                 });
+//             // Standard threshold for other categories
+//             if (topSuggestion.confidence >= 0.65) {
+//                 return topSuggestion;
 //             }
 //         }
+        
+//         return null;
+        
+//     } catch (error) {
+//         console.error('Error in complaint text analysis:', error);
+//         return null;
 //     }
-
-//     calculateBestMatch(matchResults, text) {
-//         if (matchResults.size === 0) return null;
-
-//         const suggestions = [];
-
-//         for (const [key, result] of matchResults) {
-//             // Enhanced confidence calculation
-//             const baseConfidence = result.confidence || 0.7;
-//             const matchBonus = Math.min((result.exactMatches + result.partialMatches) * 0.08, 0.4);
-//             const scoreBonus = Math.min(result.totalScore * 0.05, 0.3);
-//             const exactBonus = result.exactMatches > 0 ? Math.min(result.exactMatches * 0.05, 0.15) : 0;
-            
-//             // Context validation bonus/penalty
-//             const contextBonus = this.validateContext(text, result.matchedKeywords, result.category);
-            
-//             const finalConfidence = Math.min(
-//                 baseConfidence + matchBonus + scoreBonus + exactBonus + contextBonus,
-//                 1.0
-//             );
-
-//             // Dynamic threshold based on priority
-//             const threshold = this.confidenceThresholds[result.priority] || 0.65;
-
-//             if (finalConfidence >= threshold) {
-//                 suggestions.push({
-//                     category: result.category,
-//                     subcategory: result.subcategory,
-//                     department: result.departments[0],
-//                     allDepartments: result.departments,
-//                     confidence: finalConfidence,
-//                     matchedKeywords: [...new Set(result.matchedKeywords)], // Remove duplicates
-//                     matchCount: result.exactMatches + result.partialMatches,
-//                     exactMatches: result.exactMatches,
-//                     partialMatches: result.partialMatches,
-//                     totalScore: result.totalScore,
-//                     priority: result.priority
-//                 });
-//             }
-//         }
-
-//         // Optimized sorting
-//         suggestions.sort((a, b) => {
-//             const priorityDiff = this.categoryPriorities[a.priority] - this.categoryPriorities[b.priority];
-//             if (priorityDiff !== 0) return priorityDiff;
-            
-//             const confidenceDiff = b.confidence - a.confidence;
-//             if (Math.abs(confidenceDiff) > 0.01) return confidenceDiff;
-            
-//             return b.totalScore - a.totalScore;
-//         });
-
-//         return suggestions.length > 0 ? suggestions[0] : null;
-//     }
-
-//     validateContext(text, keywords, category) {
-//         // Context validation to reduce false positives
-//         const negativePatterns = {
-//             'Emergency': ['not emergency', 'no emergency', 'resolved', 'false alarm', 'not urgent'],
-//             'Refund': ['refund received', 'already refunded', 'no refund needed', 'refund not required'],
-//             'Technical': ['working fine', 'resolved', 'no issue', 'fixed', 'working now']
-//         };
-
-//         const contradictions = negativePatterns[category]?.some(pattern => 
-//             text.includes(pattern)
-//         );
-
-//         return contradictions ? -0.2 : 0.1; // Penalty for contradictions, bonus for consistency
-//     }
-
-//     // Batch processing for multiple complaints
-//     analyzeMultipleComplaints(complaints) {
-//         return complaints.map(complaint => ({
-//             id: complaint.id,
-//             result: this.analyzeComplaintText(complaint.text)
-//         }));
-//     }
-
-//     // Get multiple suggestions instead of just top one
-//     getTopSuggestions(text, limit = 3) {
-//         const result = this.analyzeComplaintText(text);
-//         if (!result) return [];
-
-//         // This could be extended to return multiple suggestions
-//         // by modifying calculateBestMatch to return top N results
-//         return [result];
-//     }
-// }
-
-// const optimizedAnalyzer = new OptimizedComplaintAnalyzer();
-
-// const analyzeComplaintText = (text) => {
-//     return optimizedAnalyzer.analyzeComplaintText(text);
 // };
 
 // const getDetailedAnalysis = (text) => {
@@ -531,20 +220,329 @@ const getTopSuggestions = (text, limit = 3) => {
 //         confidence: Math.round(result.confidence * 100),
 //         matchDetails: {
 //             totalKeywords: result.matchCount,
+//             strongMatches: result.strongMatches,
 //             exactMatches: result.exactMatches,
-//             partialMatches: result.partialMatches,
-//             matchedKeywords: result.matchedKeywords.slice(0, 5)
-//         },
-//         performance: {
-//             processingTime: 'Optimized for <5ms average',
-//             efficiency: 'High'
+//             matchedKeywords: result.matchedKeywords.slice(0, 5) // Top 5 matches
 //         }
 //     };
 // };
 
 // const getTopSuggestions = (text, limit = 3) => {
-//     return optimizedAnalyzer.getTopSuggestions(text, limit);
+//     if (!text || typeof text !== 'string' || text.trim().length < 20) {
+//         return [];
+//     }
+    
+//     const normalizedText = text.toLowerCase().trim();
+//     const allSuggestions = [];
+//     const priorityOrder = { 'critical': 0, 'urgent': 1, 'high': 2, 'medium': 3, 'low': 4 };
+    
+//     // [Same analysis logic as above]
+//     // ... 
+    
+//     // Return top N suggestions instead of just one
+//     return allSuggestions.slice(0, limit);
 // };
+
+// +++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+
+// ++++++++++++++++++++=alternate algo++++++++++++++++++++
+class OptimizedComplaintAnalyzer {
+    constructor() {
+        this.regexCache = new Map();
+        this.keywordIndex = new Map();
+        this.categoryPriorities = { 'critical': 0, 'urgent': 1, 'high': 2, 'medium': 3, 'low': 4 };
+        this.confidenceThresholds = {
+            'critical': 0.55,
+            'urgent': 0.65,
+            'high': 0.70,
+            'medium': 0.75
+        };
+        this.initializeOptimizedStructures();
+    }
+
+    initializeOptimizedStructures() {
+        // Pre-process and index all keywords for faster lookup
+        Object.entries(CATEGORY_KEYWORDS).forEach(([categoryName, categoryData]) => {
+            if (!categoryData?.subcategories) return;
+
+            categoryData.subcategories.forEach(subcategory => {
+                if (!subcategory?.keywords) return;
+
+                // Create reverse index for faster keyword lookup
+                subcategory.keywords.forEach(keyword => {
+                    const normalizedKeyword = keyword.toLowerCase();
+                    
+                    if (!this.keywordIndex.has(normalizedKeyword)) {
+                        this.keywordIndex.set(normalizedKeyword, []);
+                    }
+                    
+                    this.keywordIndex.get(normalizedKeyword).push({
+                        category: categoryName,
+                        subcategory: subcategory.name,
+                        departments: subcategory.departments,
+                        priority: categoryData.priority,
+                        confidence: categoryData.confidence,
+                        weight: this.calculateKeywordWeight(keyword.length),
+                        regex: this.getOrCreateRegex(normalizedKeyword)
+                    });
+                });
+            });
+        });
+    }
+
+    getOrCreateRegex(keyword) {
+        if (!this.regexCache.has(keyword)) {
+            const escapedKeyword = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            this.regexCache.set(keyword, new RegExp(`\\b${escapedKeyword}\\b`, 'gi'));
+        }
+        return this.regexCache.get(keyword);
+    }
+
+    calculateKeywordWeight(length) {
+        if (length > 20) return 4;
+        if (length > 15) return 3;
+        if (length > 10) return 2.5;
+        if (length > 5) return 2;
+        return 1.5;
+    }
+
+    analyzeComplaintText(text) {
+        // Enhanced input validation
+        if (!text || typeof text !== 'string' || text.trim().length < 10) {
+            return null;
+        }
+
+        const normalizedText = text.toLowerCase().trim();
+        const words = normalizedText.split(/\s+/);
+        const matchResults = new Map();
+
+        try {
+            // Use set for faster word lookup
+            const wordSet = new Set(words);
+            
+            // Multi-pass analysis for better accuracy
+            this.performExactMatching(normalizedText, matchResults);
+            this.performPhraseMatching(normalizedText, matchResults);
+            this.performPartialMatching(normalizedText, wordSet, matchResults);
+
+            // Calculate final scores and return best match
+            return this.calculateBestMatch(matchResults, normalizedText);
+
+        } catch (error) {
+            console.error('Error in optimized complaint analysis:', error);
+            return null;
+        }
+    }
+
+    performExactMatching(text, results) {
+        // Optimized exact matching using pre-compiled regex
+        for (const [keyword, categoryInfos] of this.keywordIndex) {
+            const regex = this.getOrCreateRegex(keyword);
+            const matches = text.match(regex);
+            
+            if (matches) {
+                categoryInfos.forEach(info => {
+                    const key = `${info.category}-${info.subcategory}`;
+                    if (!results.has(key)) {
+                        results.set(key, {
+                            ...info,
+                            exactMatches: 0,
+                            partialMatches: 0,
+                            matchedKeywords: [],
+                            totalScore: 0
+                        });
+                    }
+                    
+                    const result = results.get(key);
+                    result.exactMatches += matches.length;
+                    result.matchedKeywords.push(keyword);
+                    result.totalScore += matches.length * info.weight * 1.3; // Exact match bonus
+                });
+            }
+        }
+    }
+
+    performPhraseMatching(text, results) {
+        // Enhanced phrase matching for better context
+        const phrases = Array.from(this.keywordIndex.keys()).filter(k => k.includes(' '));
+        
+        phrases.forEach(phrase => {
+            if (text.includes(phrase)) {
+                const categoryInfos = this.keywordIndex.get(phrase);
+                categoryInfos.forEach(info => {
+                    const key = `${info.category}-${info.subcategory}`;
+                    if (results.has(key)) {
+                        const result = results.get(key);
+                        result.totalScore += info.weight * 2; // Phrase bonus
+                    }
+                });
+            }
+        });
+    }
+
+    performPartialMatching(text, wordSet, results) {
+        // Optimized partial matching with early termination
+        const minLength = 4;
+        
+        for (const [keyword, categoryInfos] of this.keywordIndex) {
+            if (keyword.length < minLength || keyword.includes(' ')) continue;
+            
+            // Check if any word contains the keyword
+            let found = false;
+            for (const word of wordSet) {
+                if (word.includes(keyword)) {
+                    found = true;
+                    break;
+                }
+            }
+            
+            if (found) {
+                categoryInfos.forEach(info => {
+                    const key = `${info.category}-${info.subcategory}`;
+                    if (!results.has(key)) {
+                        results.set(key, {
+                            ...info,
+                            exactMatches: 0,
+                            partialMatches: 0,
+                            matchedKeywords: [],
+                            totalScore: 0
+                        });
+                    }
+                    
+                    const result = results.get(key);
+                    result.partialMatches++;
+                    result.totalScore += info.weight * 0.7; // Partial match penalty
+                });
+            }
+        }
+    }
+
+    calculateBestMatch(matchResults, text) {
+        if (matchResults.size === 0) return null;
+
+        const suggestions = [];
+
+        for (const [key, result] of matchResults) {
+            // Enhanced confidence calculation
+            const baseConfidence = result.confidence || 0.7;
+            const matchBonus = Math.min((result.exactMatches + result.partialMatches) * 0.08, 0.4);
+            const scoreBonus = Math.min(result.totalScore * 0.05, 0.3);
+            const exactBonus = result.exactMatches > 0 ? Math.min(result.exactMatches * 0.05, 0.15) : 0;
+            
+            // Context validation bonus/penalty
+            const contextBonus = this.validateContext(text, result.matchedKeywords, result.category);
+            
+            const finalConfidence = Math.min(
+                baseConfidence + matchBonus + scoreBonus + exactBonus + contextBonus,
+                1.0
+            );
+
+            // Dynamic threshold based on priority
+            const threshold = this.confidenceThresholds[result.priority] || 0.65;
+
+            if (finalConfidence >= threshold) {
+                suggestions.push({
+                    category: result.category,
+                    subcategory: result.subcategory,
+                    department: result.departments[0],
+                    allDepartments: result.departments,
+                    confidence: finalConfidence,
+                    matchedKeywords: [...new Set(result.matchedKeywords)], // Remove duplicates
+                    matchCount: result.exactMatches + result.partialMatches,
+                    exactMatches: result.exactMatches,
+                    partialMatches: result.partialMatches,
+                    totalScore: result.totalScore,
+                    priority: result.priority
+                });
+            }
+        }
+
+        // Optimized sorting
+        suggestions.sort((a, b) => {
+            const priorityDiff = this.categoryPriorities[a.priority] - this.categoryPriorities[b.priority];
+            if (priorityDiff !== 0) return priorityDiff;
+            
+            const confidenceDiff = b.confidence - a.confidence;
+            if (Math.abs(confidenceDiff) > 0.01) return confidenceDiff;
+            
+            return b.totalScore - a.totalScore;
+        });
+
+        return suggestions.length > 0 ? suggestions[0] : null;
+    }
+
+    validateContext(text, keywords, category) {
+        // Context validation to reduce false positives
+        const negativePatterns = {
+            'Emergency': ['not emergency', 'no emergency', 'resolved', 'false alarm', 'not urgent'],
+            'Refund': ['refund received', 'already refunded', 'no refund needed', 'refund not required'],
+            'Technical': ['working fine', 'resolved', 'no issue', 'fixed', 'working now']
+        };
+
+        const contradictions = negativePatterns[category]?.some(pattern => 
+            text.includes(pattern)
+        );
+
+        return contradictions ? -0.2 : 0.1; // Penalty for contradictions, bonus for consistency
+    }
+
+    // Batch processing for multiple complaints
+    analyzeMultipleComplaints(complaints) {
+        return complaints.map(complaint => ({
+            id: complaint.id,
+            result: this.analyzeComplaintText(complaint.text)
+        }));
+    }
+
+    // Get multiple suggestions instead of just top one
+    getTopSuggestions(text, limit = 3) {
+        const result = this.analyzeComplaintText(text);
+        if (!result) return [];
+
+        // This could be extended to return multiple suggestions
+        // by modifying calculateBestMatch to return top N results
+        return [result];
+    }
+}
+
+const optimizedAnalyzer = new OptimizedComplaintAnalyzer();
+
+const analyzeComplaintText = (text) => {
+    return optimizedAnalyzer.analyzeComplaintText(text);
+};
+
+const getDetailedAnalysis = (text) => {
+    const result = analyzeComplaintText(text);
+    
+    if (!result) {
+        return {
+            success: false,
+            message: 'No category detected or confidence too low',
+            suggestions: []
+        };
+    }
+    
+    return {
+        success: true,
+        topMatch: result,
+        confidence: Math.round(result.confidence * 100),
+        matchDetails: {
+            totalKeywords: result.matchCount,
+            exactMatches: result.exactMatches,
+            partialMatches: result.partialMatches,
+            matchedKeywords: result.matchedKeywords.slice(0, 5)
+        },
+        performance: {
+            processingTime: 'Optimized for <5ms average',
+            efficiency: 'High'
+        }
+    };
+};
+
+const getTopSuggestions = (text, limit = 3) => {
+    return optimizedAnalyzer.getTopSuggestions(text, limit);
+};
 
 // +++++++++++++++++++++++++++++++++++++++++++++++++++++++
 

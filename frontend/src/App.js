@@ -4,7 +4,7 @@ import {
     Send, Phone, MessageCircle, ArrowLeft, Home, Plus, Eye, 
     Train, ChevronDown, Activity, Star, Bell, Settings,
     Calendar, User, Filter, Download, Share2, ExternalLink,
-    Zap, Shield, Globe, TrendingUp, Award, Heart, Mail,MessageSquare, BookOpen , X 
+    Zap, Shield, Globe, TrendingUp, Award, Heart, Mail,MessageSquare, BookOpen1 , X 
      
      
 } from 'lucide-react';

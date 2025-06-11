@@ -47,47 +47,117 @@ const StaffLoginPage = ({ onBack, complaints, navigate, onUpdateComplaint }) => 
         'Social Media & PR': ['Social Media Crisis Team', 'Public Relations Crisis Team', 'Content Moderation Team'],
         'Default Assignment': ['General Grievance Cell']
     };
-    
+ // Replace your existing useEffect with this one
+useEffect(() => {
+    const staffIsLoggedIn = localStorage.getItem('staffIsLoggedIn');
+    if (staffIsLoggedIn) {
+        setIsLoggedIn(true);
+        setLoggedInUser({
+            username: 'admin',
+            role: 'Administrator',
+            loginTime: localStorage.getItem('staffLoginTime') || new Date().toLocaleString(),
+            department: 'System Administration'
+        });
+
+        // --- ADD THIS LOGIC TO RESTORE FILTERS ---
+        const savedDept = localStorage.getItem('staffSelectedDept');
+        const savedSubDept = localStorage.getItem('staffSelectedSubDept');
+
+        if (savedDept) {
+            // Set state for department and sub-department directly
+            setSelectedDepartment(savedDept);
+            if (savedSubDept) {
+                setSelectedSubDepartment(savedSubDept);
+            }
+
+            // Manually re-apply the filter logic based on restored selections
+            let newFilteredComplaints = [];
+            if (savedSubDept) {
+                 // Filter by sub-department if it exists
+                newFilteredComplaints = Object.values(complaints).filter(c => c.assignedTo === savedSubDept);
+            } else {
+                // Otherwise, filter by the main department
+                const subdepartments = departmentStructure[savedDept] || [];
+                newFilteredComplaints = Object.values(complaints).filter(complaint =>
+                    subdepartments.includes(complaint.assignedTo)
+                );
+            }
+            setFilteredComplaints(newFilteredComplaints);
+        }
+        // --- END OF ADDED LOGIC ---
+    }
+}, [complaints]); // Add `complaints` to the dependency array
     const statusOptions = ['Submitted', 'In Progress', 'Resolved', 'Escalated', 'Closed'];
 
-    const handleLogin = (e) => {
+     const handleLogin = (e) => {
         e.preventDefault();
         if (loginData.username === 'admin' && loginData.password === 'admin') {
+            const loginTime = new Date().toLocaleString();
+            // 1. Persist login state in browser's local storage
+            localStorage.setItem('staffIsLoggedIn', 'true');
+            localStorage.setItem('staffLoginTime', loginTime);
+
             setIsLoggedIn(true);
             setLoggedInUser({
                 username: loginData.username,
                 role: 'Administrator',
-                loginTime: new Date().toLocaleString(),
+                loginTime: loginTime,
                 department: 'System Administration'
             });
+            // 2. Navigate to the new dashboard URL
+            navigate('/staff-dashboard');
         } else {
             alert('Invalid credentials! Please use admin/admin');
         }
     };
     
-    const handleLogout = () => {
-        setIsLoggedIn(false);
-        setLoggedInUser(null);
-        setSelectedDepartment('');
-        setSelectedSubDepartment('');
-        setFilteredComplaints([]);
-        setLoginData({ username: '', password: '' });
-        setEditingComplaint(null);
-    };
+    // Replace your handleLogout function with this one
+// Replace the existing handleLogout function in staff.js with this one:
+const handleLogout = (redirectPath = '/staff-login') => {
+    // 1. Clear all session and filter data from localStorage
+    localStorage.removeItem('staffIsLoggedIn');
+    localStorage.removeItem('staffLoginTime');
+    localStorage.removeItem('staffSelectedDept');
+    localStorage.removeItem('staffSelectedSubDept');
 
-    const handleDepartmentChange = (department) => {
-        setSelectedDepartment(department);
-        setSelectedSubDepartment('');
-        if (department) {
-            const subdepartments = departmentStructure[department] || [];
-            const filtered = Object.values(complaints).filter(complaint =>
-                subdepartments.includes(complaint.assignedTo)
-            );
-            setFilteredComplaints(filtered);
-        } else {
-            setFilteredComplaints([]);
-        }
-    };
+    // 2. Reset all component state to its initial values
+    setIsLoggedIn(false);
+    setLoggedInUser(null);
+    setSelectedDepartment('');
+    setSelectedSubDepartment('');
+    setFilteredComplaints([]);
+    setLoginData({ username: '', password: '' });
+    setEditingComplaint(null);
+    
+    // 3. Navigate to the desired path (either home or the login page)
+    navigate(redirectPath);
+};
+
+    // Replace your handleDepartmentChange function with this one
+const handleDepartmentChange = (department) => {
+    setSelectedDepartment(department);
+    setSelectedSubDepartment(''); // This resets sub-department
+
+    // Save/Remove selection from localStorage
+    if (department) {
+        localStorage.setItem('staffSelectedDept', department);
+        localStorage.removeItem('staffSelectedSubDept'); // Clear sub-dept selection
+    } else {
+        localStorage.removeItem('staffSelectedDept');
+        localStorage.removeItem('staffSelectedSubDept');
+    }
+
+    // Filter complaints based on the new selection
+    if (department) {
+        const subdepartments = departmentStructure[department] || [];
+        const filtered = Object.values(complaints).filter(complaint =>
+            subdepartments.includes(complaint.assignedTo)
+        );
+        setFilteredComplaints(filtered);
+    } else {
+        setFilteredComplaints([]);
+    }
+};
 
     const handleSubDepartmentChange = (subDepartment) => {
         setSelectedSubDepartment(subDepartment);
@@ -214,13 +284,14 @@ const StaffLoginPage = ({ onBack, complaints, navigate, onUpdateComplaint }) => 
                      <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 sm:p-8">
                         <div className="flex items-center justify-between mb-6">
                             <button 
-                                onClick={onBack} 
-                                className="text-orange-600 hover:text-orange-800 font-medium flex items-center gap-2 group touch-manipulation"
-                                style={{ minHeight: '44px' }}
-                            >
-                                <ArrowLeft className="h-5 w-5 group-hover:-translate-x-1 transition-transform" />
-                                <span>Back to Home</span>
-                            </button>
+    onClick={() => handleLogout('/')} // <-- This is the modified line
+    className="text-orange-600 hover:text-orange-800 font-medium flex items-center gap-2 group touch-manipulation"
+    style={{ minHeight: '44px' }}
+>
+    <ArrowLeft className="h-5 w-5 group-hover:-translate-x-1 transition-transform" />
+    <span className="hidden sm:inline">Back to Home</span>
+    <span className="sm:hidden">Back</span>
+</button>
                         </div>
 
                         <div className="text-center mb-8">
@@ -341,13 +412,14 @@ const StaffLoginPage = ({ onBack, complaints, navigate, onUpdateComplaint }) => 
                         </div>
 
                         <button
-                            onClick={handleLogout}
-                            className="px-3 sm:px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors font-medium flex items-center space-x-2 touch-manipulation flex-shrink-0"
-                            style={{ minHeight: '44px' }}
-                        >
-                            <XCircle className="h-4 w-4" />
-                            <span className="hidden sm:inline">Logout</span>
-                        </button>
+    onClick={() => handleLogout()}  // ✅ Calls handleLogout with no arguments, uses default '/staff-login'
+    className="px-3 sm:px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors font-medium flex items-center space-x-2 touch-manipulation flex-shrink-0"
+    style={{ minHeight: '44px' }}
+>
+    <XCircle className="h-4 w-4" />
+    <span className="hidden sm:inline">Logout</span>
+</button>
+
                     </div>
                 </div>
             </div>
@@ -481,7 +553,8 @@ const StaffLoginPage = ({ onBack, complaints, navigate, onUpdateComplaint }) => 
                                                                 </>
                                                             ) : (
                                                                 <>
-                                                                    <button onClick={() => navigate(`/dashboard/${complaint.id}`)} className="text-orange-600 hover:text-orange-900 flex items-center space-x-1"><Eye className="h-4 w-4" /><span>View</span></button>
+                                                                    <button onClick={() => navigate(`/dashboard/${complaint.id}?from=staff`)}
+ className="text-orange-600 hover:text-orange-900 flex items-center space-x-1"><Eye className="h-4 w-4" /><span>View</span></button>
                                                                     <button onClick={() => handleEditComplaint(complaint)} className="text-blue-600 hover:text-blue-900 flex items-center space-x-1"><Edit className="h-4 w-4" /><span>Edit</span></button>
                                                                 </>
                                                             )}
@@ -549,7 +622,8 @@ const StaffLoginPage = ({ onBack, complaints, navigate, onUpdateComplaint }) => 
                                                 </div>
                                             ) : (
                                                 <div className="flex space-x-2">
-                                                    <button onClick={() => navigate(`/dashboard/${complaint.id}`)} className="flex-1 flex items-center justify-center space-x-2 px-4 py-2 bg-orange-100 text-orange-700 rounded-lg hover:bg-orange-200 transition-colors touch-manipulation" style={{ minHeight: '44px' }}><Eye className="h-4 w-4" /><span>View Details</span></button>
+                                                    <button onClick={() => navigate(`/dashboard/${complaint.id}?from=staff`)}
+ className="flex-1 flex items-center justify-center space-x-2 px-4 py-2 bg-orange-100 text-orange-700 rounded-lg hover:bg-orange-200 transition-colors touch-manipulation" style={{ minHeight: '44px' }}><Eye className="h-4 w-4" /><span>View Details</span></button>
                                                     <button onClick={() => handleEditComplaint(complaint)} className="flex-1 flex items-center justify-center space-x-2 px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors touch-manipulation" style={{ minHeight: '44px' }}><Edit className="h-4 w-4" /><span>Edit Status</span></button>
                                                 </div>
                                             )}
@@ -581,3 +655,4 @@ const StaffLoginPage = ({ onBack, complaints, navigate, onUpdateComplaint }) => 
 };
 
 export default StaffLoginPage;
+   

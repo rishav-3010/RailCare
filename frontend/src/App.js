@@ -3419,67 +3419,78 @@ const generateComplaintStatus = (category, priority, timeElapsed) => {
     };
     
     const renderPage = () => {
-    if (currentPath.startsWith('/dashboard/')) {
-        const id = currentPath.split('/dashboard/')[1];
-        const complaint = complaints[id];
-        return complaint ? (
-            <ComplaintDetailsPage complaint={complaint} onBack={() => navigate('/dashboard')} />
-        ) : (
-            <div className="text-center py-20">
-                <h2 className="text-2xl font-bold text-gray-800 mb-4">404 - Complaint Not Found</h2>
-                <p className="text-gray-600 mb-6">The complaint you're looking for doesn't exist or may have been removed.</p>
-                <button 
-                    onClick={() => navigate('/dashboard')} 
-                    className="px-6 py-3 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700 transition-colors"
-                >
-                    Go to Dashboard
-                </button>
-            </div>
-        );
-    }
+      // MODIFICATION START: Logic to handle dynamic back navigation
+      if (currentPath.startsWith('/dashboard/')) {
+          const url = new URL(window.location.href);
+          const id = url.pathname.split('/dashboard/')[1];
+          const from = url.searchParams.get('from');
 
-    switch (currentPath) {
-        case '/':
-        case '/home':
-            return <HomePage navigate={navigate} />;
-        case '/guidelines':
-            return <GuidelinesPage onBack={() => navigate('/')} />;
-        case '/submit':
-            return <ComplaintFormPage onComplaintSubmit={handleComplaintSubmit} />;
-        case '/lookup':
-            return <ComplaintLookupPage onLookup={handleComplaintLookup} />;
-        case '/track':
-            return <TrackComplaintPage onTrack={handleTrackComplaint} />;
-        case '/dashboard':
-            return <DashboardPage 
-                complaints={Object.values(complaints)} 
-                onSelectComplaint={(id) => navigate(`/dashboard/${id}`)} 
-                navigate={navigate} 
-            />;
-        case '/faq':
-            return <FaqPage />;
-        case '/staff-login':
-            return <StaffLoginPage 
-                    onBack={() => navigate('/')} 
-                    complaints={complaints} // You are already passing this
-                    navigate={navigate}
-                    onUpdateComplaint={handleUpdateComplaint} // Pass the update function
+          const complaint = complaints[id];
+          // MODIFIED: Changed back path for staff to go to the new dashboard URL
+          const backPath = from === 'staff' ? '/staff-dashboard' : '/dashboard';
+
+          return complaint ? (
+              // Pass the correct 'onBack' handler to the details page
+              <ComplaintDetailsPage complaint={complaint} onBack={() => navigate(backPath)} />
+          ) : (
+              <div className="text-center py-20">
+                  <h2 className="text-2xl font-bold text-gray-800 mb-4">404 - Complaint Not Found</h2>
+                  <p className="text-gray-600 mb-6">The complaint you're looking for doesn't exist or may have been removed.</p>
+                  <button 
+                      onClick={() => navigate(backPath)} // Use the dynamic backPath here too
+                      className="px-6 py-3 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700 transition-colors"
+                  >
+                      Go to Dashboard
+                  </button>
+              </div>
+          );
+      }
+    // MODIFICATION END
+
+      switch (currentPath) {
+          case '/':
+          case '/home':
+              return <HomePage navigate={navigate} />;
+          case '/guidelines':
+              return <GuidelinesPage onBack={() => navigate('/')} />;
+          case '/submit':
+              return <ComplaintFormPage onComplaintSubmit={handleComplaintSubmit} />;
+          case '/lookup':
+              return <ComplaintLookupPage onLookup={handleComplaintLookup} />;
+          case '/track':
+              return <TrackComplaintPage onTrack={handleTrackComplaint} />;
+          case '/dashboard':
+              return <DashboardPage 
+                  complaints={Object.values(complaints)} 
+                  onSelectComplaint={(id) => navigate(`/dashboard/${id}`)} 
+                  navigate={navigate} 
+              />;
+          case '/faq':
+              return <FaqPage />;
+        {/* MODIFIED: Combined routes to handle both staff login and dashboard rendering */}
+          case '/staff-login':
+          case '/staff-dashboard':
+              return <StaffLoginPage 
+                      onBack={() => navigate('/')} 
+                      complaints={complaints}
+                      navigate={navigate}
+                      onUpdateComplaint={handleUpdateComplaint}
                 />;
-        default:
-            return (
-                <div className="text-center py-20">
-                    <h2 className="text-2xl font-bold text-gray-800 mb-4">404 - Page Not Found</h2>
-                    <p className="text-gray-600 mb-6">The page you're looking for doesn't exist.</p>
-                    <button 
-                        onClick={() => navigate('/')} 
-                        className="px-6 py-3 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700 transition-colors"
-                    >
-                        Go to Home
-                    </button>
-                </div>
-            );
-    }
-};
+          default:
+              return (
+                  <div className="text-center py-20">
+                      <h2 className="text-2xl font-bold text-gray-800 mb-4">404 - Page Not Found</h2>
+                      <p className="text-gray-600 mb-6">The page you're looking for doesn't exist.</p>
+                      <button 
+                          onClick={() => navigate('/')} 
+                          className="px-6 py-3 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700 transition-colors"
+                      >
+                          Go to Home
+                      </button>
+                  </div>
+              );
+      }
+    };
 
     return (
     <div className="bg-gray-50 text-gray-800 min-h-screen flex flex-col">

@@ -2661,66 +2661,92 @@ const TrackComplaintPage = ({ onTrack }) => {
     );
 };
 
-const DashboardPage = ({ complaints, onSelectComplaint, navigate, isVertical = true }) => (
-    <div className="space-y-6">
-        <div className="text-center">
-            <h2 className="text-2xl font-bold text-gray-800 mb-2">My Complaints Dashboard</h2>
-            <p className="text-gray-600">Monitor and manage all your submitted complaints</p>
+// FIX: The DashboardPage component is updated to be stateful and handle filtering.
+const DashboardPage = ({ complaints, onSelectComplaint, navigate, isVertical = true }) => {
+    // FIX: Add state to keep track of the selected filter status.
+    const [filterStatus, setFilterStatus] = useState('All Status');
+
+    // FIX: This function will be called whenever the user selects a new filter option.
+    const handleFilterChange = (e) => {
+        setFilterStatus(e.target.value);
+    };
+
+    // FIX: Filter the complaints based on the selected status before rendering.
+    const filteredComplaints = complaints.filter(complaint => {
+        if (filterStatus === 'All Status') {
+            return true; // Show all complaints
+        }
+        return complaint.status === filterStatus; // Show only complaints with matching status
+    });
+
+    return (
+        <div className="space-y-6">
+            <div className="text-center">
+                <h2 className="text-2xl font-bold text-gray-800 mb-2">My Complaints Dashboard</h2>
+                <p className="text-gray-600">Monitor and manage all your submitted complaints</p>
+            </div>
+            
+            {complaints.length > 0 ? (
+                <div>
+                    <div className="flex justify-between items-center mb-6">
+                        <div className="flex items-center space-x-3">
+                            <div className="flex items-center space-x-2 bg-white px-3 py-2 rounded-lg shadow-sm border border-gray-200">
+                                <Filter className="h-4 w-4 text-gray-500" />
+                                {/* FIX: Add onChange handler and value to the select element. */}
+                                <select 
+                                    className="border-0 focus:ring-0 text-sm bg-transparent"
+                                    value={filterStatus}
+                                    onChange={handleFilterChange}
+                                >
+                                    <option>All Status</option>
+                                    <option>In Progress</option>
+                                    <option>Resolved</option>
+                                    <option>Submitted</option>
+                                </select>
+                            </div>
+                            <div className="text-sm text-gray-500">
+                                {/* FIX: Display the count of the *filtered* complaints. */}
+                                Total: <span className="font-bold text-indigo-600">{filteredComplaints.length}</span> complaints
+                            </div>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                            <button className="p-2 text-gray-500 hover:text-indigo-600 transition-colors rounded-lg hover:bg-gray-50">
+                                <Download className="h-4 w-4" />
+                            </button>
+                            <button className="p-2 text-gray-500 hover:text-indigo-600 transition-colors rounded-lg hover:bg-gray-50">
+                                <Share2 className="h-4 w-4" />
+                            </button>
+                        </div>
+                    </div>
+                    
+                    {/* FIX: Render the *filtered* list of complaints. */}
+                    <div className={isVertical ? "space-y-3" : "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"}>
+                        {filteredComplaints.map(c => <ComplaintCard key={c.id} complaint={c} onSelect={onSelectComplaint} isVertical={isVertical} />)}
+                    </div>
+                </div>
+            ) : (
+                <div className="text-center py-16 bg-white rounded-2xl shadow-sm border border-gray-100">
+                    <div className="max-w-md mx-auto">
+                        <div className="p-6 bg-gray-100 rounded-2xl w-24 h-24 mx-auto mb-6 flex items-center justify-center">
+                            <FileText className="h-12 w-12 text-gray-400" />
+                        </div>
+                        <h3 className="text-xl font-bold text-gray-800 mb-2">No complaints found</h3>
+                        <p className="text-gray-600 mb-6 leading-relaxed">
+                            You haven't submitted any complaints yet. Get started by filing a new complaint.
+                        </p>
+                        <button 
+                            onClick={() => navigate('/submit')} 
+                            className="inline-flex items-center px-6 py-3 border border-transparent shadow-sm font-bold rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 transition-colors space-x-2"
+                        >
+                            <Plus className="h-5 w-5" />
+                            <span>File Your First Complaint</span>
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
-        
-        {complaints.length > 0 ? (
-            <div>
-                <div className="flex justify-between items-center mb-6">
-                    <div className="flex items-center space-x-3">
-                        <div className="flex items-center space-x-2 bg-white px-3 py-2 rounded-lg shadow-sm border border-gray-200">
-                            <Filter className="h-4 w-4 text-gray-500" />
-                            <select className="border-0 focus:ring-0 text-sm bg-transparent">
-                                <option>All Status</option>
-                                <option>In Progress</option>
-                                <option>Resolved</option>
-                                <option>Submitted</option>
-                            </select>
-                        </div>
-                        <div className="text-sm text-gray-500">
-                            Total: <span className="font-bold text-indigo-600">{complaints.length}</span> complaints
-                        </div>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                        <button className="p-2 text-gray-500 hover:text-indigo-600 transition-colors rounded-lg hover:bg-gray-50">
-                            <Download className="h-4 w-4" />
-                        </button>
-                        <button className="p-2 text-gray-500 hover:text-indigo-600 transition-colors rounded-lg hover:bg-gray-50">
-                            <Share2 className="h-4 w-4" />
-                        </button>
-                    </div>
-                </div>
-                
-                <div className={isVertical ? "space-y-3" : "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"}>
-                    {complaints.map(c => <ComplaintCard key={c.id} complaint={c} onSelect={onSelectComplaint} isVertical={isVertical} />)}
-                </div>
-            </div>
-        ) : (
-            <div className="text-center py-16 bg-white rounded-2xl shadow-sm border border-gray-100">
-                <div className="max-w-md mx-auto">
-                    <div className="p-6 bg-gray-100 rounded-2xl w-24 h-24 mx-auto mb-6 flex items-center justify-center">
-                        <FileText className="h-12 w-12 text-gray-400" />
-                    </div>
-                    <h3 className="text-xl font-bold text-gray-800 mb-2">No complaints found</h3>
-                    <p className="text-gray-600 mb-6 leading-relaxed">
-                        You haven't submitted any complaints yet. Get started by filing a new complaint.
-                    </p>
-                    <button 
-                        onClick={() => navigate('/submit')} 
-                        className="inline-flex items-center px-6 py-3 border border-transparent shadow-sm font-bold rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 transition-colors space-x-2"
-                    >
-                        <Plus className="h-5 w-5" />
-                        <span>File Your First Complaint</span>
-                    </button>
-                </div>
-            </div>
-        )}
-    </div>
-);
+    );
+};
 
 const ComplaintDetailsPage = ({ complaint, onBack }) => {
     const [messages, setMessages] = useState(complaint?.communications || []);
@@ -3419,67 +3445,78 @@ const generateComplaintStatus = (category, priority, timeElapsed) => {
     };
     
     const renderPage = () => {
-    if (currentPath.startsWith('/dashboard/')) {
-        const id = currentPath.split('/dashboard/')[1];
-        const complaint = complaints[id];
-        return complaint ? (
-            <ComplaintDetailsPage complaint={complaint} onBack={() => navigate('/dashboard')} />
-        ) : (
-            <div className="text-center py-20">
-                <h2 className="text-2xl font-bold text-gray-800 mb-4">404 - Complaint Not Found</h2>
-                <p className="text-gray-600 mb-6">The complaint you're looking for doesn't exist or may have been removed.</p>
-                <button 
-                    onClick={() => navigate('/dashboard')} 
-                    className="px-6 py-3 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700 transition-colors"
-                >
-                    Go to Dashboard
-                </button>
-            </div>
-        );
-    }
+      // MODIFICATION START: Logic to handle dynamic back navigation
+      if (currentPath.startsWith('/dashboard/')) {
+          const url = new URL(window.location.href);
+          const id = url.pathname.split('/dashboard/')[1];
+          const from = url.searchParams.get('from');
 
-    switch (currentPath) {
-        case '/':
-        case '/home':
-            return <HomePage navigate={navigate} />;
-        case '/guidelines':
-            return <GuidelinesPage onBack={() => navigate('/')} />;
-        case '/submit':
-            return <ComplaintFormPage onComplaintSubmit={handleComplaintSubmit} />;
-        case '/lookup':
-            return <ComplaintLookupPage onLookup={handleComplaintLookup} />;
-        case '/track':
-            return <TrackComplaintPage onTrack={handleTrackComplaint} />;
-        case '/dashboard':
-            return <DashboardPage 
-                complaints={Object.values(complaints)} 
-                onSelectComplaint={(id) => navigate(`/dashboard/${id}`)} 
-                navigate={navigate} 
-            />;
-        case '/faq':
-            return <FaqPage />;
-        case '/staff-login':
-            return <StaffLoginPage 
-                    onBack={() => navigate('/')} 
-                    complaints={complaints} // You are already passing this
-                    navigate={navigate}
-                    onUpdateComplaint={handleUpdateComplaint} // Pass the update function
+          const complaint = complaints[id];
+          // MODIFIED: Changed back path for staff to go to the new dashboard URL
+          const backPath = from === 'staff' ? '/staff-dashboard' : '/dashboard';
+
+          return complaint ? (
+              // Pass the correct 'onBack' handler to the details page
+              <ComplaintDetailsPage complaint={complaint} onBack={() => navigate(backPath)} />
+          ) : (
+              <div className="text-center py-20">
+                  <h2 className="text-2xl font-bold text-gray-800 mb-4">404 - Complaint Not Found</h2>
+                  <p className="text-gray-600 mb-6">The complaint you're looking for doesn't exist or may have been removed.</p>
+                  <button 
+                      onClick={() => navigate(backPath)} // Use the dynamic backPath here too
+                      className="px-6 py-3 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700 transition-colors"
+                  >
+                      Go to Dashboard
+                  </button>
+              </div>
+          );
+      }
+    // MODIFICATION END
+
+      switch (currentPath) {
+          case '/':
+          case '/home':
+              return <HomePage navigate={navigate} />;
+          case '/guidelines':
+              return <GuidelinesPage onBack={() => navigate('/')} />;
+          case '/submit':
+              return <ComplaintFormPage onComplaintSubmit={handleComplaintSubmit} />;
+          case '/lookup':
+              return <ComplaintLookupPage onLookup={handleComplaintLookup} />;
+          case '/track':
+              return <TrackComplaintPage onTrack={handleTrackComplaint} />;
+          case '/dashboard':
+              return <DashboardPage 
+                  complaints={Object.values(complaints)} 
+                  onSelectComplaint={(id) => navigate(`/dashboard/${id}`)} 
+                  navigate={navigate} 
+              />;
+          case '/faq':
+              return <FaqPage />;
+        {/* MODIFIED: Combined routes to handle both staff login and dashboard rendering */}
+          case '/staff-login':
+          case '/staff-dashboard':
+              return <StaffLoginPage 
+                      onBack={() => navigate('/')} 
+                      complaints={complaints}
+                      navigate={navigate}
+                      onUpdateComplaint={handleUpdateComplaint}
                 />;
-        default:
-            return (
-                <div className="text-center py-20">
-                    <h2 className="text-2xl font-bold text-gray-800 mb-4">404 - Page Not Found</h2>
-                    <p className="text-gray-600 mb-6">The page you're looking for doesn't exist.</p>
-                    <button 
-                        onClick={() => navigate('/')} 
-                        className="px-6 py-3 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700 transition-colors"
-                    >
-                        Go to Home
-                    </button>
-                </div>
-            );
-    }
-};
+          default:
+              return (
+                  <div className="text-center py-20">
+                      <h2 className="text-2xl font-bold text-gray-800 mb-4">404 - Page Not Found</h2>
+                      <p className="text-gray-600 mb-6">The page you're looking for doesn't exist.</p>
+                      <button 
+                          onClick={() => navigate('/')} 
+                          className="px-6 py-3 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700 transition-colors"
+                      >
+                          Go to Home
+                      </button>
+                  </div>
+              );
+      }
+    };
 
     return (
     <div className="bg-gray-50 text-gray-800 min-h-screen flex flex-col">
